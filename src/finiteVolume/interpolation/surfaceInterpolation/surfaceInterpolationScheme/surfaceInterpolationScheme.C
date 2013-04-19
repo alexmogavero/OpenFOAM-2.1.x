@@ -117,6 +117,7 @@ tmp<surfaceInterpolationScheme<Type> > surfaceInterpolationScheme<Type>::New
 
     if (surfaceInterpolation::debug || surfaceInterpolationScheme<Type>::debug)
     {
+    	Info << "--2----------" << endl;
         Info<< "surfaceInterpolationScheme<Type>::New"
                "(const fvMesh&, const surfaceScalarField&, Istream&)"
                " : discretisation scheme = "
@@ -249,6 +250,7 @@ surfaceInterpolationScheme<Type>::interpolate
 {
     if (surfaceInterpolation::debug)
     {
+    	Info << "-------7-----------" << endl;
         Info<< "surfaceInterpolationScheme<Type>::interpolate"
                "(const GeometricField<Type, fvPatchField, volMesh>&, "
                "const tmp<surfaceScalarField>&) : "
@@ -303,7 +305,20 @@ surfaceInterpolationScheme<Type>::interpolate
         }
         else
         {
-            sf.boundaryField()[pi] = vf.boundaryField()[pi];
+        	// TODO verify if there is the possibility to use the coupled boundary instead of this implementation
+        	if (surfaceInterpolation::extrapolate)
+        	{
+        		if (surfaceInterpolation::debug)
+				{
+					Info << "extrapolating" << endl;
+				}
+        		tsf().boundaryField()[pi] =
+					pLambda*vf.boundaryField()[pi].patchInternalField()
+				 + (1.0 - pLambda)*(2*vf.boundaryField()[pi] - vf.boundaryField()[pi].patchInternalField());
+        	}else
+        	{
+        		sf.boundaryField()[pi] = vf.boundaryField()[pi];
+        	}
         }
     }
 
@@ -324,6 +339,7 @@ surfaceInterpolationScheme<Type>::interpolate
 {
     if (surfaceInterpolation::debug)
     {
+    	Info << "---3-------------" << endl;
         Info<< "surfaceInterpolationScheme<Type>::interpolate"
                "(const GeometricField<Type, fvPatchField, volMesh>&) : "
             << "interpolating volTypeField from cells to faces"

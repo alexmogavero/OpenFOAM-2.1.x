@@ -37,6 +37,10 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
     const GeometricField<Type, fvPatchField, volMesh>& phi
 ) const
 {
+	if(surfaceInterpolation::debug)
+	{
+		Info << "-----5----------" << endl;
+	}
     const fvMesh& mesh = this->mesh();
 
     tmp<surfaceScalarField> tLimiter
@@ -61,8 +65,17 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
     const GeometricField<typename Limiter::phiType, fvPatchField, volMesh>&
         lPhi = tlPhi();
 
+    if(surfaceInterpolation::debug)
+    {
+    	Info << "-----5.1---------" << endl;
+    }
     tmp<GeometricField<typename Limiter::gradPhiType, fvPatchField, volMesh> >
         tgradc(fvc::grad(lPhi));
+    if(surfaceInterpolation::debug)
+	{
+		Info << "-----5.1---------" << endl;
+	}
+
     const GeometricField<typename Limiter::gradPhiType, fvPatchField, volMesh>&
         gradc = tgradc();
 
@@ -140,7 +153,55 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
         }
         else
         {
-            pLim = 1.0;
+        	if (surfaceInterpolation::extrapolate)
+        	{
+        		if (surfaceInterpolation::debug)
+        		{
+        			Info << "extrapolating" << endl;
+        		}
+				// TODO verify if there is the possibility to use the coupled boundary instead of this implementation
+				const scalarField& pCDweights = CDweights.boundaryField()[patchi];
+				const scalarField& pFaceFlux =
+					this->faceFlux_.boundaryField()[patchi];
+
+				const Field<typename Limiter::phiType> plPhiP
+				(
+					lPhi.boundaryField()[patchi].patchInternalField()
+				);
+				const Field<typename Limiter::phiType> plPhiN
+				(
+					2*lPhi.boundaryField()[patchi] -
+					lPhi.boundaryField()[patchi].patchInternalField()
+				);
+				const Field<typename Limiter::gradPhiType> pGradcP
+				(
+					gradc.boundaryField()[patchi].patchInternalField()
+				);
+				const Field<typename Limiter::gradPhiType> pGradcN
+				(
+					-pGradcP
+				);
+
+				// Build the d-vectors
+				vectorField pd = CDweights.boundaryField()[patchi].patch().delta();
+
+				forAll(pLim, face)
+				{
+					pLim[face] = Limiter::limiter
+					(
+						pCDweights[face],
+						pFaceFlux[face],
+						plPhiP[face],
+						plPhiN[face],
+						pGradcP[face],
+						pGradcN[face],
+						pd[face]
+					);
+				}
+        	}else
+        	{
+        		pLim = 1.0;
+        	}
         }
     }
 
