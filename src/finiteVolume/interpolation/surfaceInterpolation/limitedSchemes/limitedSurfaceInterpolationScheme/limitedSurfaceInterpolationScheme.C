@@ -160,6 +160,10 @@ tmp<surfaceScalarField> limitedSurfaceInterpolationScheme<Type>::weights
     tmp<surfaceScalarField> tLimiter
 ) const
 {
+	if(surfaceInterpolation::debug)
+	{
+		Info << "------6----------" << endl;
+	}
     // Note that here the weights field is initialised as the limiter
     // from which the weight is calculated using the limiter value
     surfaceScalarField& Weights = tLimiter();
@@ -200,6 +204,10 @@ tmp<surfaceScalarField> limitedSurfaceInterpolationScheme<Type>::weights
     const GeometricField<Type, fvPatchField, volMesh>& phi
 ) const
 {
+	if(surfaceInterpolation::debug)
+	{
+		Info << "----4-----------" << endl;
+	}
     return this->weights
     (
         phi,
