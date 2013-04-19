@@ -138,6 +138,7 @@ interpolate
 {
     if (surfaceInterpolation::debug)
     {
+    	Info << "-1------------" << endl;
         Info<< "interpolate"
             << "(const GeometricField<Type, fvPatchField, volMesh>&, "
             << "const surfaceScalarField&, const word&) : "
