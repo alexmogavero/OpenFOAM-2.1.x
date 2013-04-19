@@ -99,6 +99,8 @@ protected:
 
 public:
 
+    //TODO this static variable is a temporary extrapolation switch, it shall be replaced with something better
+    static bool extrapolate;
     // Declare name of the class and its debug switch
     ClassName("surfaceInterpolation");
 
