@@ -179,7 +179,9 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
 				);
 				const Field<typename Limiter::gradPhiType> pGradcN
 				(
-					-pGradcP
+					//TODO find a better model to guess the external gradient
+					//-pGradcP		//specular trend on boundary
+					pGradcP			//null second derivative on boundary
 				);
 
 				// Build the d-vectors
