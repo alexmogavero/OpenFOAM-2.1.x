@@ -185,7 +185,10 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
 				);
 
 				// Build the d-vectors
-				vectorField pd = CDweights.boundaryField()[patchi].patch().delta();
+				//vectorField pd = CDweights.boundaryField()[patchi].patch().delta();
+				//vectorField Cf = mesh.boundary()[patchi].Cf();
+				//vectorField Cn = mesh.boundary()[patchi].Cn();
+				vectorField pd = 2*mesh.boundary()[patchi].delta(); //ghost cell size equal to the internal field one
 
 				forAll(pLim, face)
 				{
