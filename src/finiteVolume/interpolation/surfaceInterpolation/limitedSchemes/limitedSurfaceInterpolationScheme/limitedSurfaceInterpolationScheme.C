@@ -182,17 +182,39 @@ tmp<surfaceScalarField> limitedSurfaceInterpolationScheme<Type>::weights
 
     forAll(bWeights, patchI)
     {
-        scalarField& pWeights = bWeights[patchI];
+    	if (surfaceInterpolation::extrapolate)
+		{
+			if (surfaceInterpolation::debug)
+			{
+				Info << "extrapolating" << endl;
+			}
+			scalarField& pWeights = bWeights[patchI];
 
-        const scalarField& pCDweights = CDweights.boundaryField()[patchI];
-        const scalarField& pFaceFlux = faceFlux_.boundaryField()[patchI];
+			//const scalarField& pCDweights = CDweights.boundaryField()[patchI];
+			const scalarField& pFaceFlux = faceFlux_.boundaryField()[patchI];
 
-        forAll(pWeights, face)
-        {
-            pWeights[face] =
-                pWeights[face]*pCDweights[face]
-              + (1.0 - pWeights[face])*pos(pFaceFlux[face]);
-        }
+			//the CDweights on the boundary have been calculated with the hypothesis of aligned cells (i.e. CDweight=0.5)
+			forAll(pWeights, face)
+			{
+				pWeights[face] =
+					pWeights[face]*0.5
+				  + (1.0 - pWeights[face])*pos(pFaceFlux[face]);
+			}
+		}
+    	else
+		{
+			scalarField& pWeights = bWeights[patchI];
+
+			const scalarField& pCDweights = CDweights.boundaryField()[patchI];
+			const scalarField& pFaceFlux = faceFlux_.boundaryField()[patchI];
+
+			forAll(pWeights, face)
+			{
+				pWeights[face] =
+					pWeights[face]*pCDweights[face]
+				  + (1.0 - pWeights[face])*pos(pFaceFlux[face]);
+			}
+		}
     }
 
     return tLimiter;
