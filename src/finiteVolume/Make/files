@@ -391,4 +391,4 @@ $(basicSource)/explicitSetValue/explicitSetValue.C
 $(basicSource)/actuationDiskSource/actuationDiskSource.C
 $(basicSource)/radialActuationDiskSource/radialActuationDiskSource.C
 
-LIB = $(FOAM_USER_LIBBIN)/libfiniteVolume_1_0
+LIB = $(FOAM_USER_LIBBIN)/libfiniteVolume
