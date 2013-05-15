@@ -305,20 +305,7 @@ surfaceInterpolationScheme<Type>::interpolate
         }
         else
         {
-        	// TODO verify if there is the possibility to use the coupled boundary instead of this implementation
-        	if (surfaceInterpolation::extrapolate)
-        	{
-        		if (surfaceInterpolation::debug)
-				{
-					Info << "extrapolating" << endl;
-				}
-        		tsf().boundaryField()[pi] =
-					pLambda*vf.boundaryField()[pi].patchInternalField()
-				 + (1.0 - pLambda)*(2*vf.boundaryField()[pi] - vf.boundaryField()[pi].patchInternalField());
-        	}else
-        	{
-        		sf.boundaryField()[pi] = vf.boundaryField()[pi];
-        	}
+        	sf.boundaryField()[pi] = vf.boundaryField()[pi];
         }
     }
 
@@ -327,6 +314,88 @@ surfaceInterpolationScheme<Type>::interpolate
     return tsf;
 }
 
+//- Return the face-interpolate of the given cell field
+//  with the given weigting factors
+template<class Type>
+tmp<GeometricField<Type, fvsPatchField, surfaceMesh> >
+surfaceInterpolationScheme<Type>::extrapolate
+(
+    const GeometricField<Type, fvPatchField, volMesh>& vf,
+    const tmp<surfaceScalarField>& tlambdas
+)
+{
+    if (surfaceInterpolation::debug)
+    {
+    	Info << "-------7-----------" << endl;
+        Info<< "surfaceInterpolationScheme<Type>::interpolate"
+               "(const GeometricField<Type, fvPatchField, volMesh>&, "
+               "const tmp<surfaceScalarField>&) : "
+               "interpolating volTypeField from cells to faces "
+               "without explicit correction"
+            << endl;
+    }
+
+    const surfaceScalarField& lambdas = tlambdas();
+
+    const Field<Type>& vfi = vf.internalField();
+    const scalarField& lambda = lambdas.internalField();
+
+    const fvMesh& mesh = vf.mesh();
+    const labelUList& P = mesh.owner();
+    const labelUList& N = mesh.neighbour();
+
+    tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > tsf
+    (
+        new GeometricField<Type, fvsPatchField, surfaceMesh>
+        (
+            IOobject
+            (
+                "interpolate("+vf.name()+')',
+                vf.instance(),
+                vf.db()
+            ),
+            mesh,
+            vf.dimensions()
+        )
+    );
+    GeometricField<Type, fvsPatchField, surfaceMesh>& sf = tsf();
+
+    Field<Type>& sfi = sf.internalField();
+
+    for (register label fi=0; fi<P.size(); fi++)
+    {
+        sfi[fi] = lambda[fi]*(vfi[P[fi]] - vfi[N[fi]]) + vfi[N[fi]];
+    }
+
+    // Interpolate across coupled patches using given lambdas
+
+    forAll(lambdas.boundaryField(), pi)
+    {
+        const fvsPatchScalarField& pLambda = lambdas.boundaryField()[pi];
+
+        if (vf.boundaryField()[pi].coupled())
+        {
+            tsf().boundaryField()[pi] =
+                pLambda*vf.boundaryField()[pi].patchInternalField()
+             + (1.0 - pLambda)*vf.boundaryField()[pi].patchNeighbourField();
+        }
+        else
+        {
+			if (surfaceInterpolation::debug)
+			{
+				Info << "extrapolating" << endl;
+			}
+			tsf().boundaryField()[pi] =
+				pLambda*vf.boundaryField()[pi].patchInternalField()
+			 + (1.0 - pLambda)*(2*vf.boundaryField()[pi] - vf.boundaryField()[pi].patchInternalField());
+
+        }
+    }
+
+    tlambdas.clear();
+
+    return tsf;
+}
 
 //- Return the face-interpolate of the given cell field
 //  with explicit correction
@@ -346,8 +415,14 @@ surfaceInterpolationScheme<Type>::interpolate
             << endl;
     }
 
-    tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > tsf
-        = interpolate(vf, weights(vf));
+    tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > tsf;
+    if (this->extrapolate_)
+    {
+    	tsf = extrapolate(vf, weights(vf));
+    }else
+    {
+    	tsf = interpolate(vf, weights(vf));
+    }
 
     if (corrected())
     {
