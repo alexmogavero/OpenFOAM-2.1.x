@@ -103,6 +103,15 @@ namespace fvc
         const word& name
     );
 
+    //- Interpolate field onto faces, extrapolating on the boundary, using scheme given by name in fvSchemes
+	template<class Type>
+	static tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > extrapolate
+	(
+		const GeometricField<Type, fvPatchField, volMesh>& tvf,
+		const surfaceScalarField& faceFlux,
+		const word& name
+	);
+
     //- Interpolate field onto faces using scheme given by name in fvSchemes
     template<class Type>
     static tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > interpolate
