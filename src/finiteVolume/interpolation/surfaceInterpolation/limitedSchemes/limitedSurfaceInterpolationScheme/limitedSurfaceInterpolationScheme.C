@@ -182,7 +182,7 @@ tmp<surfaceScalarField> limitedSurfaceInterpolationScheme<Type>::weights
 
     forAll(bWeights, patchI)
     {
-    	if (surfaceInterpolation::extrapolate)
+    	if (this->extrapolate_)
 		{
 			if (surfaceInterpolation::debug)
 			{
