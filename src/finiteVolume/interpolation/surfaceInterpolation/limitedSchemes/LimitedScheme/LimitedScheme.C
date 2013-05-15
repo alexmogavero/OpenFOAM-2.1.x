@@ -69,8 +69,16 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
     {
     	Info << "-----5.1---------" << endl;
     }
-    tmp<GeometricField<typename Limiter::gradPhiType, fvPatchField, volMesh> >
-        tgradc(fvc::grad(lPhi));
+    tmp<GeometricField<typename Limiter::gradPhiType, fvPatchField, volMesh> > tgradc;
+    if(surfaceInterpolation::extrapolate)
+    {
+    	surfaceInterpolation::extrapolate = false;
+    	tgradc = fvc::grad(lPhi);
+    	surfaceInterpolation::extrapolate = true;
+    }else
+    {
+    	tgradc = fvc::grad(lPhi);
+    }
     if(surfaceInterpolation::debug)
 	{
 		Info << "-----5.1---------" << endl;
