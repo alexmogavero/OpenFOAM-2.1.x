@@ -77,6 +77,8 @@ public:
     //- Runtime type information
     TypeName("surfaceInterpolationScheme");
 
+    bool extrapolate_;
+
 
     // Declare run-time constructor selection tables
 
@@ -111,7 +113,8 @@ public:
         //- Construct from mesh
         surfaceInterpolationScheme(const fvMesh& mesh)
         :
-            mesh_(mesh)
+            mesh_(mesh),
+            extrapolate_(false)
         {}
 
 
@@ -164,6 +167,16 @@ public:
             const GeometricField<Type, fvPatchField, volMesh>&,
             const tmp<surfaceScalarField>&
         );
+
+
+        //- Return the face-interpolate of the given cell field
+		//  with the given weighting factors extrapolating on the boundaries
+		static tmp<GeometricField<Type, fvsPatchField, surfaceMesh> >
+		extrapolate
+		(
+			const GeometricField<Type, fvPatchField, volMesh>&,
+			const tmp<surfaceScalarField>&
+		);
 
 
         //- Return the interpolation weighting factors for the given field
