@@ -70,15 +70,7 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
     	Info << "-----5.1---------" << endl;
     }
     tmp<GeometricField<typename Limiter::gradPhiType, fvPatchField, volMesh> > tgradc;
-    if(surfaceInterpolation::extrapolate)
-    {
-    	surfaceInterpolation::extrapolate = false;
-    	tgradc = fvc::grad(lPhi);
-    	surfaceInterpolation::extrapolate = true;
-    }else
-    {
-    	tgradc = fvc::grad(lPhi);
-    }
+    tgradc = fvc::grad(lPhi);
     if(surfaceInterpolation::debug)
 	{
 		Info << "-----5.1---------" << endl;
@@ -161,13 +153,12 @@ Foam::LimitedScheme<Type, Limiter, LimitFunc>::limiter
         }
         else
         {
-        	if (surfaceInterpolation::extrapolate)
+        	if (this->extrapolate_)
         	{
         		if (surfaceInterpolation::debug)
         		{
         			Info << "extrapolating" << endl;
         		}
-				// TODO verify if there is the possibility to use the coupled boundary instead of this implementation
 				const scalarField& pCDweights = CDweights.boundaryField()[patchi];
 				const scalarField& pFaceFlux =
 					this->faceFlux_.boundaryField()[patchi];
