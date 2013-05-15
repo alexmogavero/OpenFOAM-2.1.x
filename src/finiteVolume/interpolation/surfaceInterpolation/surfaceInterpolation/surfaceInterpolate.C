@@ -150,6 +150,31 @@ interpolate
     return scheme<Type>(faceFlux, name)().interpolate(vf);
 }
 
+template<class Type>
+tmp<GeometricField<Type, fvsPatchField, surfaceMesh> >
+extrapolate
+(
+    const GeometricField<Type, fvPatchField, volMesh>& vf,
+    const surfaceScalarField& faceFlux,
+    const word& name
+)
+{
+    if (surfaceInterpolation::debug)
+    {
+    	Info << "-1------------" << endl;
+        Info<< "interpolate"
+            << "(const GeometricField<Type, fvPatchField, volMesh>&, "
+            << "const surfaceScalarField&, const word&) : "
+            << "interpolating GeometricField<Type, fvPatchField, volMesh> "
+            << "using " << name
+            << endl;
+    }
+
+    tmp<surfaceInterpolationScheme<Type> > selectedScheme(scheme<Type>(faceFlux, name));
+    selectedScheme().extrapolate_ = true;
+    return selectedScheme().interpolate(vf);
+}
+
 // Interpolate field onto faces using scheme given by name in dictionary
 template<class Type>
 tmp<GeometricField<Type, fvsPatchField, surfaceMesh> >
