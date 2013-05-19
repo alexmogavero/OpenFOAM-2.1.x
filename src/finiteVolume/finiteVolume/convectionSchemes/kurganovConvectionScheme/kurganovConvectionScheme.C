@@ -60,15 +60,14 @@ kurganovConvectionScheme<Type>::interpolate
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
-	surfaceScalarField neg(-pos_);
+	//Info << max(neg_()).value() << endl;
+	//surfaceScalarField neg(-pos_());
+	/*is_.rewind();
+	tmp<surfaceInterpolationScheme<Type> > posTinterpScheme(surfaceInterpolationScheme<Type>::New(pos_().mesh(), pos_(), is_));
 	is_.rewind();
-	tmp<surfaceInterpolationScheme<Type> > posTinterpScheme(surfaceInterpolationScheme<Type>::New(pos_.mesh(), pos_, is_));
-	is_.rewind();
-	tmp<surfaceInterpolationScheme<Type> > negTinterpScheme(surfaceInterpolationScheme<Type>::New(pos_.mesh(), neg, is_));
-	posTinterpScheme().extrapolate_ = true;
-	negTinterpScheme().extrapolate_ = true;
-    return posFaceFlux*posTinterpScheme().interpolate(vf) +
-    		negFaceFlux*negTinterpScheme().interpolate(vf);
+	tmp<surfaceInterpolationScheme<Type> > negTinterpScheme(surfaceInterpolationScheme<Type>::New(pos_().mesh(), neg, is_));*/
+    return posFaceFlux*posTinterpScheme_().interpolate(vf) +
+    		negFaceFlux*negTinterpScheme_().interpolate(vf);
 
 }
 
