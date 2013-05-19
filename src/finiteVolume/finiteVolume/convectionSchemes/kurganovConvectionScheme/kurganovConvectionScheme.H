@@ -57,9 +57,12 @@ class kurganovConvectionScheme
     public fv::convectionScheme<Type>
 {
     // Private data
-		const surfaceScalarField& pos_;
 
 		Istream& is_;
+
+		const tmp<surfaceScalarField> pos_;
+
+		const tmp<surfaceScalarField> neg_;
 
         tmp<surfaceInterpolationScheme<Type> > posTinterpScheme_;
 
@@ -104,23 +107,14 @@ public:
         )
         :
 			convectionScheme<Type>(mesh, pos),
-			pos_(pos),
 			is_(is),
-			posTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, pos, is))
+			pos_(pos),
+			neg_(-pos),
+			posTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, pos_, is)),
+			negTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, neg_, is.rewind()))
 		{
-        	/*const word ty(is);
-        	Info << ty << endl;
-        	is.rewind();
-        	posTinterpScheme_ =	surfaceInterpolationScheme<Type>::New(mesh, pos, is);
-        	is.rewind();
-        	const word ty1(is);
-        	is.rewind();
-        	surfaceScalarField neg(IOobject("pos","",mesh),mesh,dimensionedScalar("pos", dimless, 1.0));
-        	//neg_neg);
-        	negTinterpScheme_ =	surfaceInterpolationScheme<Type>::New(mesh, neg_, is);
-
-			posTinterpScheme_().extrapolate_ = true;
-			negTinterpScheme_().extrapolate_ = true;*/
+        	posTinterpScheme_().extrapolate_ = true;
+        	negTinterpScheme_().extrapolate_ = true;
 		}
 
 
