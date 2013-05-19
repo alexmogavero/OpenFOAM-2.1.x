@@ -58,8 +58,6 @@ class kurganovConvectionScheme
 {
     // Private data
 
-		Istream& is_;
-
 		const tmp<surfaceScalarField> pos_;
 
 		const tmp<surfaceScalarField> neg_;
@@ -107,9 +105,8 @@ public:
         )
         :
 			convectionScheme<Type>(mesh, pos),
-			is_(is),
-			pos_(pos),
-			neg_(-pos),
+			pos_(surfaceScalarField(IOobject("pos","dummy",mesh),mesh,dimensionedScalar("pos", dimless, 1.0))),
+			neg_(surfaceScalarField(IOobject("neg","dummy",mesh),mesh,dimensionedScalar("neg", dimless, -1.0))),
 			posTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, pos_, is)),
 			negTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, neg_, is.rewind()))
 		{
