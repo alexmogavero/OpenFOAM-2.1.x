@@ -58,14 +58,19 @@ class kurganovConvectionScheme
 {
     // Private data
 
-		const tmp<surfaceScalarField> pos_;
+		const surfaceScalarField pos_;
 
-		const tmp<surfaceScalarField> neg_;
+		const surfaceScalarField neg_;
 
         tmp<surfaceInterpolationScheme<Type> > posTinterpScheme_;
 
         tmp<surfaceInterpolationScheme<Type> > negTinterpScheme_;
 
+        const surfaceScalarField& ap_;
+
+        const surfaceScalarField& am_;
+
+        const surfaceScalarField& negFaceFlux_;
 
     // Private Member Functions
 
@@ -100,16 +105,21 @@ public:
         kurganovConvectionScheme
         (
             const fvMesh& mesh,
-            const surfaceScalarField& pos,
+            const surfaceScalarField& flux,
             Istream& is
         )
         :
-			convectionScheme<Type>(mesh, pos),
-			pos_(surfaceScalarField(IOobject("pos","dummy",mesh),mesh,dimensionedScalar("pos", dimless, 1.0))),
-			neg_(surfaceScalarField(IOobject("neg","dummy",mesh),mesh,dimensionedScalar("neg", dimless, -1.0))),
+			convectionScheme<Type>(mesh, flux),
+			pos_(IOobject("pos","dummy",mesh),mesh,dimensionedScalar("pos", dimless, 1.0)),
+			neg_(IOobject("neg","dummy",mesh),mesh,dimensionedScalar("neg", dimless, -1.0)),
 			posTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, pos_, is)),
-			negTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, neg_, is.rewind()))
+			ap_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is))),
+			am_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is))),
+			negFaceFlux_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is)))
 		{
+        	is.rewind();
+        	word dummy(is);
+        	negTinterpScheme_ = surfaceInterpolationScheme<Type>::New(mesh, neg_, is);
         	posTinterpScheme_().extrapolate_ = true;
         	negTinterpScheme_().extrapolate_ = true;
 		}
