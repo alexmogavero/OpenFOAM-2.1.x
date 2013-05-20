@@ -55,13 +55,13 @@ template<class Type>
 tmp<GeometricField<Type, fvsPatchField, surfaceMesh> >
 kurganovConvectionScheme<Type>::interpolate
 (
-    const surfaceScalarField& posFaceFlux,
-    const surfaceScalarField& negFaceFlux,
+    const surfaceScalarField& posWeight,
+    const surfaceScalarField& negWeight,
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
-    return posFaceFlux*posTinterpScheme_().interpolate(vf) +
-    		negFaceFlux*negTinterpScheme_().interpolate(vf);
+    return posWeight*posTinterpScheme_().interpolate(vf) +
+    		negWeight*negTinterpScheme_().interpolate(vf);
 }
 
 
@@ -129,17 +129,7 @@ kurganovConvectionScheme<Type>::fvcDiv
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
-    tmp<GeometricField<Type, fvPatchField, volMesh> > tConvection
-    (
-        fvc::surfaceIntegrate(flux(faceFlux, vf))
-    );
-
-    tConvection().rename
-    (
-        "convection(" + faceFlux.name() + ',' + vf.name() + ')'
-    );
-
-    return tConvection;
+    return kurganovConvectionScheme<Type>::fvcDiv(faceFlux,negFaceFlux_,vf);
 }
 
 template<class Type>
@@ -151,9 +141,15 @@ kurganovConvectionScheme<Type>::fvcDiv
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
+	surfaceScalarField a_pos(ap_/(ap_ - am_));  //equation.9.b (i.e. Kurganov)
+	surfaceScalarField a_neg(1.0 - a_pos);
+	surfaceScalarField aSf(am_*a_pos);  //(-1)*equation.10.b (i.e. Kurganov)
+	surfaceScalarField aphiv_pos(a_pos*posFaceFlux - aSf);
+	surfaceScalarField aphiv_neg(a_neg*negFaceFlux + aSf);
+
     tmp<GeometricField<Type, fvPatchField, volMesh> > tConvection
     (
-        fvc::surfaceIntegrate(interpolate(posFaceFlux, negFaceFlux, vf))
+        fvc::surfaceIntegrate(interpolate(aphiv_pos, aphiv_neg, vf))
     );
 
     tConvection().rename
