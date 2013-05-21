@@ -343,7 +343,8 @@ convectionSchemes = finiteVolume/convectionSchemes
 $(convectionSchemes)/convectionScheme/convectionSchemes.C
 $(convectionSchemes)/gaussConvectionScheme/gaussConvectionSchemes.C
 $(convectionSchemes)/multivariateGaussConvectionScheme/multivariateGaussConvectionSchemes.C
-$(convectionSchemes)/kurganovConvectionScheme/kurganovConvectionSchemes.C
+$(convectionSchemes)/centralConvectionSchemes/centralConvectionScheme/centralConvectionSchemes.C
+$(convectionSchemes)/centralConvectionSchemes/kurganovConvectionScheme/kurganovConvectionSchemes.C
 
 laplacianSchemes = finiteVolume/laplacianSchemes
 $(laplacianSchemes)/laplacianScheme/laplacianSchemes.C
