@@ -22,20 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fv::kurganovConvectionScheme
+    Foam::fv::corrKurganovConvectionScheme
 
 Description
     Basic second-order convection using face-gradients and Gauss' theorem.
 
 SourceFiles
-    kurganovConvectionScheme.C
+    corrKurganovConvectionScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef kurganovConvectionScheme_H
-#define kurganovConvectionScheme_H
+#ifndef corrKurganovConvectionScheme_H
+#define corrKurganovConvectionScheme_H
 
-#include "centralConvectionScheme.H"
+#include "kurganovConvectionScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,100 +48,77 @@ namespace fv
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class kurganovConvectionScheme Declaration
+                       Class corrKurganovConvectionScheme Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class kurganovConvectionScheme
+class corrKurganovConvectionScheme
 :
-    public fv::centralConvectionScheme<Type>
+    public fv::kurganovConvectionScheme<Type>
 {
     // Private data
+
+        //const surfaceScalarField& ap_;
+
+        //const surfaceScalarField& am_;
 
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        kurganovConvectionScheme(const kurganovConvectionScheme&);
+        corrKurganovConvectionScheme(const corrKurganovConvectionScheme&);
 
         //- Disallow default bitwise assignment
-        void operator=(const kurganovConvectionScheme&);
+        void operator=(const corrKurganovConvectionScheme&);
 
-protected:
-        const surfaceScalarField& ap_;
+        tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > wIntermediate
+		(
+			const surfaceScalarField&,
+			const surfaceScalarField&,
+			const GeometricField<Type, fvsPatchField, surfaceMesh>&,
+			const GeometricField<Type, fvsPatchField, surfaceMesh>&
+		) const;
 
-        const surfaceScalarField& am_;
+		tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > correction
+		(
+			const surfaceScalarField&,
+			const surfaceScalarField&,
+			const GeometricField<Type, fvsPatchField, surfaceMesh>&,
+			const GeometricField<Type, fvsPatchField, surfaceMesh>&
+		) const;
 
 
 public:
 
     //- Runtime type information
-    TypeName("Kurganov");
+    TypeName("CorrKurganov");
 
 
     // Constructors
 
         //- Construct from flux and interpolation scheme
-        kurganovConvectionScheme
+        corrKurganovConvectionScheme
         (
             const fvMesh& mesh,
             const surfaceScalarField& faceFlux,
             const tmp<surfaceInterpolationScheme<Type> >& scheme
         )
         :
-            centralConvectionScheme<Type>(mesh, faceFlux, scheme)
+            kurganovConvectionScheme<Type>(mesh, faceFlux, scheme)
         {}
 
         //- Construct from flux and Istream
-        kurganovConvectionScheme
+        corrKurganovConvectionScheme
         (
             const fvMesh& mesh,
             const surfaceScalarField& flux,
             Istream& is
         )
         :
-        	centralConvectionScheme<Type>(mesh,flux,is),
-			/*convectionScheme<Type>(mesh, flux),
-			pos_(IOobject("pos","dummy",mesh),mesh,dimensionedScalar("pos", dimless, 1.0)),
-			neg_(IOobject("neg","dummy",mesh),mesh,dimensionedScalar("neg", dimless, -1.0)),
-			posTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, pos_, is)),*/
-			ap_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is))),
-			am_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is)))
-			//negFaceFlux_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is)))
+        	kurganovConvectionScheme<Type>(mesh,flux,is)
 		{}
 
 
     // Member Functions
-
-        /*tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > interpolate
-		(
-			const surfaceScalarField&,
-			const GeometricField<Type, fvPatchField, volMesh>&
-		) const;
-
-        tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > interpolate
-        (
-            const surfaceScalarField&,
-            const surfaceScalarField&,
-            const GeometricField<Type, fvPatchField, volMesh>&
-        ) const;
-
-        tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > flux
-        (
-            const surfaceScalarField&,
-            const GeometricField<Type, fvPatchField, volMesh>&
-        ) const;
-
-        tmp<fvMatrix<Type> > fvmDiv
-        (
-            const surfaceScalarField&,
-            const GeometricField<Type, fvPatchField, volMesh>&
-        ) const;*/
-
-        /*tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
-        (
-            const surfaceScalarField&,
-            const GeometricField<Type, fvPatchField, volMesh>&
-        ) const;*/
 
         tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
 		(
@@ -149,6 +126,12 @@ public:
 			const surfaceScalarField&,
 			const GeometricField<Type, fvPatchField, volMesh>&
 		) const;
+
+        /*tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > minMod
+		(
+			const GeometricField<Type, fvsPatchField, surfaceMesh>&,
+			const GeometricField<Type, fvsPatchField, surfaceMesh>&
+		) const;*/
 };
 
 
@@ -163,7 +146,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#   include "kurganovConvectionScheme.C"
+#   include "corrKurganovConvectionScheme.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

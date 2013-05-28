@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "kurganovConvectionScheme.H"
+#include "centralConvectionScheme.H"
 #include "fvcSurfaceIntegrate.H"
 #include "fvMatrices.H"
 #include "surfaceInterpolationScheme.H"
@@ -40,9 +40,9 @@ namespace fv
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-/*template<class Type>
+template<class Type>
 tmp<GeometricField<Type, fvsPatchField, surfaceMesh> >
-kurganovConvectionScheme<Type>::interpolate
+centralConvectionScheme<Type>::interpolate
 (
     const surfaceScalarField& posFaceFlux,
     const GeometricField<Type, fvPatchField, volMesh>& vf
@@ -53,7 +53,7 @@ kurganovConvectionScheme<Type>::interpolate
 
 template<class Type>
 tmp<GeometricField<Type, fvsPatchField, surfaceMesh> >
-kurganovConvectionScheme<Type>::interpolate
+centralConvectionScheme<Type>::interpolate
 (
     const surfaceScalarField& posWeight,
     const surfaceScalarField& negWeight,
@@ -67,7 +67,7 @@ kurganovConvectionScheme<Type>::interpolate
 
 template<class Type>
 tmp<GeometricField<Type, fvsPatchField, surfaceMesh> >
-kurganovConvectionScheme<Type>::flux
+centralConvectionScheme<Type>::flux
 (
     const surfaceScalarField& faceFlux,
     const GeometricField<Type, fvPatchField, volMesh>& vf
@@ -79,7 +79,7 @@ kurganovConvectionScheme<Type>::flux
 
 template<class Type>
 tmp<fvMatrix<Type> >
-kurganovConvectionScheme<Type>::fvmDiv
+centralConvectionScheme<Type>::fvmDiv
 (
     const surfaceScalarField& faceFlux,
     const GeometricField<Type, fvPatchField, volMesh>& vf
@@ -118,38 +118,32 @@ kurganovConvectionScheme<Type>::fvmDiv
     }
 
     return fvm;
-}*/
+}
 
 
-/*template<class Type>
+template<class Type>
 tmp<GeometricField<Type, fvPatchField, volMesh> >
-kurganovConvectionScheme<Type>::fvcDiv
+centralConvectionScheme<Type>::fvcDiv
 (
     const surfaceScalarField& faceFlux,
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
-    return kurganovConvectionScheme<Type>::fvcDiv(faceFlux,this->negFaceFlux_,vf);
-}*/
+    return fvcDiv(faceFlux,negFaceFlux_,vf);
+}
 
 template<class Type>
 tmp<GeometricField<Type, fvPatchField, volMesh> >
-kurganovConvectionScheme<Type>::fvcDiv
+centralConvectionScheme<Type>::fvcDiv
 (
     const surfaceScalarField& posFaceFlux,
     const surfaceScalarField& negFaceFlux,
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
-	surfaceScalarField a_pos(ap_/(ap_ - am_));  //equation.9.b (i.e. Kurganov)
-	surfaceScalarField a_neg(1.0 - a_pos);
-	surfaceScalarField aSf(am_*a_pos);  //(-1)*equation.10.b (i.e. Kurganov)
-	surfaceScalarField aphiv_pos(a_pos*posFaceFlux - aSf);
-	surfaceScalarField aphiv_neg(a_neg*negFaceFlux + aSf);
-
     tmp<GeometricField<Type, fvPatchField, volMesh> > tConvection
     (
-        fvc::surfaceIntegrate(interpolate(aphiv_pos, aphiv_neg, vf))
+        fvc::surfaceIntegrate(interpolate(posFaceFlux, negFaceFlux, vf))
     );
 
     tConvection().rename

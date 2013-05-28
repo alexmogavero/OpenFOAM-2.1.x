@@ -22,20 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fv::kurganovConvectionScheme
+    Foam::fv::centralConvectionScheme
 
 Description
     Basic second-order convection using face-gradients and Gauss' theorem.
 
 SourceFiles
-    kurganovConvectionScheme.C
+    centralConvectionScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef kurganovConvectionScheme_H
-#define kurganovConvectionScheme_H
+#ifndef centralConvectionScheme_H
+#define centralConvectionScheme_H
 
-#include "centralConvectionScheme.H"
+#include "convectionScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,71 +48,80 @@ namespace fv
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class kurganovConvectionScheme Declaration
+                       Class centralConvectionScheme Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class kurganovConvectionScheme
+class centralConvectionScheme
 :
-    public fv::centralConvectionScheme<Type>
+    public fv::convectionScheme<Type>
 {
     // Private data
+
+		const surfaceScalarField pos_;
+
+		const surfaceScalarField neg_;
 
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        kurganovConvectionScheme(const kurganovConvectionScheme&);
+        centralConvectionScheme(const centralConvectionScheme&);
 
         //- Disallow default bitwise assignment
-        void operator=(const kurganovConvectionScheme&);
+        void operator=(const centralConvectionScheme&);
 
 protected:
-        const surfaceScalarField& ap_;
+        tmp<surfaceInterpolationScheme<Type> > posTinterpScheme_;
 
-        const surfaceScalarField& am_;
+        tmp<surfaceInterpolationScheme<Type> > negTinterpScheme_;
 
+        const surfaceScalarField& negFaceFlux_;
 
 public:
 
     //- Runtime type information
-    TypeName("Kurganov");
-
+    TypeName("Central");
 
     // Constructors
 
         //- Construct from flux and interpolation scheme
-        kurganovConvectionScheme
+        centralConvectionScheme
         (
             const fvMesh& mesh,
             const surfaceScalarField& faceFlux,
             const tmp<surfaceInterpolationScheme<Type> >& scheme
         )
         :
-            centralConvectionScheme<Type>(mesh, faceFlux, scheme)
+            convectionScheme<Type>(mesh, faceFlux),
+            posTinterpScheme_(scheme)
         {}
 
         //- Construct from flux and Istream
-        kurganovConvectionScheme
+        centralConvectionScheme
         (
             const fvMesh& mesh,
             const surfaceScalarField& flux,
             Istream& is
         )
         :
-        	centralConvectionScheme<Type>(mesh,flux,is),
-			/*convectionScheme<Type>(mesh, flux),
+			convectionScheme<Type>(mesh, flux),
 			pos_(IOobject("pos","dummy",mesh),mesh,dimensionedScalar("pos", dimless, 1.0)),
 			neg_(IOobject("neg","dummy",mesh),mesh,dimensionedScalar("neg", dimless, -1.0)),
-			posTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, pos_, is)),*/
-			ap_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is))),
-			am_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is)))
-			//negFaceFlux_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is)))
-		{}
+			posTinterpScheme_(surfaceInterpolationScheme<Type>::New(mesh, pos_, is)),
+			negFaceFlux_(static_cast<const objectRegistry&>(mesh).lookupObject<surfaceScalarField>(word(is)))
+		{
+        	is.rewind();
+        	word dummy(is);
+        	negTinterpScheme_ = surfaceInterpolationScheme<Type>::New(mesh, neg_, is);
+        	word dummy1(is);
+        	posTinterpScheme_().extrapolate_ = true;
+        	negTinterpScheme_().extrapolate_ = true;
+		}
 
 
     // Member Functions
 
-        /*tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > interpolate
+        tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > interpolate
 		(
 			const surfaceScalarField&,
 			const GeometricField<Type, fvPatchField, volMesh>&
@@ -135,15 +144,15 @@ public:
         (
             const surfaceScalarField&,
             const GeometricField<Type, fvPatchField, volMesh>&
-        ) const;*/
+        ) const;
 
-        /*tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
+        tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
         (
             const surfaceScalarField&,
             const GeometricField<Type, fvPatchField, volMesh>&
-        ) const;*/
+        ) const;
 
-        tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
+        virtual tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
 		(
 			const surfaceScalarField&,
 			const surfaceScalarField&,
@@ -163,7 +172,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#   include "kurganovConvectionScheme.C"
+#   include "centralConvectionScheme.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
