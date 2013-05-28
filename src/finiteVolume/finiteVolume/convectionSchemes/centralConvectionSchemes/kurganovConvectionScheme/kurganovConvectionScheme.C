@@ -121,7 +121,7 @@ kurganovConvectionScheme<Type>::fvmDiv
 }*/
 
 
-template<class Type>
+/*template<class Type>
 tmp<GeometricField<Type, fvPatchField, volMesh> >
 kurganovConvectionScheme<Type>::fvcDiv
 (
@@ -130,7 +130,7 @@ kurganovConvectionScheme<Type>::fvcDiv
 ) const
 {
     return kurganovConvectionScheme<Type>::fvcDiv(faceFlux,this->negFaceFlux_,vf);
-}
+}*/
 
 template<class Type>
 tmp<GeometricField<Type, fvPatchField, volMesh> >

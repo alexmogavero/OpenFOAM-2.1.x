@@ -58,10 +58,6 @@ class kurganovConvectionScheme
 {
     // Private data
 
-        const surfaceScalarField& ap_;
-
-        const surfaceScalarField& am_;
-
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
@@ -69,6 +65,11 @@ class kurganovConvectionScheme
 
         //- Disallow default bitwise assignment
         void operator=(const kurganovConvectionScheme&);
+
+protected:
+        const surfaceScalarField& ap_;
+
+        const surfaceScalarField& am_;
 
 
 public:
@@ -136,11 +137,11 @@ public:
             const GeometricField<Type, fvPatchField, volMesh>&
         ) const;*/
 
-        tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
+        /*tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
         (
             const surfaceScalarField&,
             const GeometricField<Type, fvPatchField, volMesh>&
-        ) const;
+        ) const;*/
 
         tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
 		(
