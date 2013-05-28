@@ -62,12 +62,6 @@ class centralConvectionScheme
 
 		const surfaceScalarField neg_;
 
-        tmp<surfaceInterpolationScheme<Type> > posTinterpScheme_;
-
-        tmp<surfaceInterpolationScheme<Type> > negTinterpScheme_;
-
-
-
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
@@ -76,13 +70,18 @@ class centralConvectionScheme
         //- Disallow default bitwise assignment
         void operator=(const centralConvectionScheme&);
 
+protected:
+        tmp<surfaceInterpolationScheme<Type> > posTinterpScheme_;
+
+        tmp<surfaceInterpolationScheme<Type> > negTinterpScheme_;
+
+        const surfaceScalarField& negFaceFlux_;
 
 public:
 
     //- Runtime type information
     TypeName("Central");
 
-    const surfaceScalarField& negFaceFlux_;
     // Constructors
 
         //- Construct from flux and interpolation scheme
@@ -153,7 +152,7 @@ public:
             const GeometricField<Type, fvPatchField, volMesh>&
         ) const;
 
-        tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
+        virtual tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
 		(
 			const surfaceScalarField&,
 			const surfaceScalarField&,

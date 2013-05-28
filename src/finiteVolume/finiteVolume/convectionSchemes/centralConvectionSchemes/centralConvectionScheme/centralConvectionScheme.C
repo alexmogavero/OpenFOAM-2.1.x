@@ -129,7 +129,7 @@ centralConvectionScheme<Type>::fvcDiv
     const GeometricField<Type, fvPatchField, volMesh>& vf
 ) const
 {
-    return centralConvectionScheme<Type>::fvcDiv(faceFlux,negFaceFlux_,vf);
+    return fvcDiv(faceFlux,negFaceFlux_,vf);
 }
 
 template<class Type>
