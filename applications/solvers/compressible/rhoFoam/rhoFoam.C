@@ -45,9 +45,12 @@ Description
 
 #include "exactReinmannSolver.H"
 #include "wafFluxScheme.H"
+#include "goudonovFluxScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
+const Foam::word fv::exactReinmannSolver::typeName = "ExactReinmann";
+const Foam::word fv::wafFluxScheme::typeName = "WAF";
+const Foam::word fv::goudonovFluxScheme::typeName = "WAF";
 int main(int argc, char *argv[])
 {
 	Info<< "\n---------Version 2.0--------\n" << endl;
@@ -202,8 +205,9 @@ int main(int argc, char *argv[])
         fv::kurganovConvectionScheme<vector> kurgV(mesh,pos,Is1);
         //volScalarField phi_(kurg.fvcDiv(phiv_pos1,phiv_neg1,rho));
 
-        fv::wafFluxScheme<double> sTest(mesh,phi,p,U,rho);
+        fv::goudonovFluxScheme sTest(mesh,phi,p,U,rho);
         sTest.calculate(pAve,rhoAve,UAve);
+
 
 
         surfaceScalarField rhoFlux(rhoAve*(UAve & mesh.Sf()));
