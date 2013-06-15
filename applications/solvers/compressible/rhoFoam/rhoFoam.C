@@ -96,8 +96,8 @@ int main(int argc, char *argv[])
 
         surfaceScalarField rhoFlux(rhoAve*(UAve & mesh.Sf()));
         surfaceVectorField UFlux(rhoFlux*UAve + pAve*mesh.Sf());
-        volScalarField h0(thermo.he(p,0*T));
-        surfaceScalarField EFlux((UAve & mesh.Sf())*(pAve/(1.4-1) + 0.5*rhoAve*magSqr(UAve) + pAve));
+        dimensionedScalar e0("e0",e.dimensions(),thermo.e(0*T,1)()[0]);
+        surfaceScalarField EFlux((UAve & mesh.Sf())*(e0*rhoAve + pAve/(1.4-1) + 0.5*rhoAve*magSqr(UAve) + pAve));
 
 		#include "cellDebug.H"
 
@@ -224,12 +224,12 @@ int main(int argc, char *argv[])
             rhoE = rho*(e + 0.5*magSqr(U));
         }
 
-        Info << p[0] << " ";
+        //Info << p[0] << " ";
         p.dimensionedInternalField() =
             rho.dimensionedInternalField()
            /psi.dimensionedInternalField();
         p.correctBoundaryConditions();
-        Info << p[0] << " " << (e[0]*(1.4-1)) << endl;
+        //Info << p[0] << " " << (e[0]*(1.4-1)) << endl;
 
         rho.boundaryField() = psi.boundaryField()*p.boundaryField();
         if(min(rho).value()<rhomin)
