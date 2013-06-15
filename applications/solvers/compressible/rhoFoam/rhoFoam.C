@@ -78,111 +78,10 @@ int main(int argc, char *argv[])
     	rhoU.storePrevIter();
     	rhoE.storePrevIter();
 
-        // --- upwind interpolation of primitive fields on faces
-    	// TODO the kurganov flux splitting implementation shall be hard coded in the finiteVolume library
-        surfaceInterpolation::debug = false;
-
-    	surfaceScalarField rho_pos
-        (
-            fvc::extrapolate(rho, pos, "reconstruct(rho)")
-        );
-    	surfaceInterpolation::debug = false;
-
-        surfaceScalarField rho_neg
-        (
-            fvc::extrapolate(rho, neg, "reconstruct(rho)")
-        );
-
-
-        surfaceVectorField rhoU_pos
-        (
-            fvc::extrapolate(rhoU, pos, "reconstruct(U)")
-        );
-
-        surfaceVectorField rhoU_neg
-        (
-            fvc::extrapolate(rhoU, neg, "reconstruct(U)")
-        );
-
-        volScalarField rPsi(1.0/psi);
-
-        surfaceScalarField rPsi_pos
-        (
-            fvc::extrapolate(rPsi, pos, "reconstruct(T)")
-        );
-
-        surfaceScalarField rPsi_neg
-        (
-            fvc::extrapolate(rPsi, neg, "reconstruct(T)")
-        );
-
-
-        /*surfaceScalarField e_pos
-        (
-            fvc::extrapolate(e, pos, "reconstruct(T)")
-        );
-
-        surfaceScalarField e_neg
-        (
-            fvc::extrapolate(e, neg, "reconstruct(T)")
-        );*/
-
-        surfaceVectorField U_pos(rhoU_pos/rho_pos);
-        surfaceVectorField U_neg(rhoU_neg/rho_neg);
-
-        surfaceScalarField p_pos(rho_pos*rPsi_pos);  //rPsi=p/rho ==> rPsi=RT (perfect gas assumption)
-        surfaceScalarField p_neg(rho_neg*rPsi_neg);
-
-        surfaceScalarField phiv_pos(U_pos & mesh.Sf());
-        surfaceScalarField phiv_neg(U_neg & mesh.Sf());
-
-        volScalarField c(sqrt(thermo.Cp()/thermo.Cv()*rPsi));  //perfect gas assumption
-
-        surfaceScalarField cSf_pos
-        (
-            fvc::extrapolate(c, pos, "reconstruct(T)")*mesh.magSf()
-        );
-
-        surfaceScalarField cSf_neg
-        (
-            fvc::extrapolate(c, neg, "reconstruct(T)")*mesh.magSf()
-        );
-
-        surfaceScalarField ap
-        ("ap",
-            max(max(phiv_pos + cSf_pos, phiv_neg + cSf_neg), v_zero)  //equation.8.a
-        );
-        surfaceScalarField am
-        ("am",
-            min(min(phiv_pos - cSf_pos, phiv_neg - cSf_neg), v_zero)  //(-1)*equation.8.b
-        );
-
-        surfaceScalarField a_pos(ap/(ap - am));  //equation.9.b (i.e. Kurganov)
-
-        surfaceScalarField amaxSf("amaxSf", max(mag(am), mag(ap)));
-
-        surfaceScalarField aSf(am*a_pos);  //(-1)*equation.10.b (i.e. Kurganov)
-
-        if (fluxScheme == "Tadmor")
-        {
-            aSf = -0.5*amaxSf;  //(-1)*equation.10.a (i.e. Tadmor)
-            a_pos = 0.5;        //equation.9.a (i.e. Tadmor)
-        }
-
-        surfaceScalarField a_neg(1.0 - a_pos);
-
-        surfaceScalarField phiv_pos1("phiv_pos",phiv_pos);
-        surfaceScalarField phiv_neg1("phiv_neg",phiv_neg);
-
-        phiv_pos *= a_pos;
-        phiv_neg *= a_neg;
-
-        surfaceScalarField aphiv_pos("aphiv_pos",phiv_pos - aSf);
-        surfaceScalarField aphiv_neg(phiv_neg + aSf);
-
-        // Reuse amaxSf for the maximum positive and negative fluxes
-        // estimated by the central scheme
-        amaxSf = max(mag(aphiv_pos), mag(aphiv_neg));
+    	volScalarField c(sqrt(thermo.Cp()/(thermo.Cv()*psi)));
+    	surfaceScalarField phiv(fvc::interpolate(U) & mesh.Sf());
+    	surfaceScalarField cSf(fvc::interpolate(c)*mesh.magSf());
+    	surfaceScalarField amaxSf(max(mag(phiv + cSf),mag(phiv - cSf)));
 
         #include "compressibleCourantNo.H"
         #include "readTimeControls.H"
@@ -192,50 +91,26 @@ int main(int argc, char *argv[])
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        //phi = aphiv_pos*rho_pos + aphiv_neg*rho_neg; //equation.7 for rho
-
-        //volScalarField phi_(fvc::div(phiv_pos1,rho));
-        //Info << max(mag(fvc::div(phi) - phi_)).value() << endl;
-
-        Istream& Is(mesh.divScheme("kurg"));
-        word dummy(Is);
-        fv::kurganovConvectionScheme<double> kurg(mesh,pos,Is);
-        Istream& Is1(mesh.divScheme("kurgV"));
-        word dummy1(Is1);
-        fv::kurganovConvectionScheme<vector> kurgV(mesh,pos,Is1);
-        //volScalarField phi_(kurg.fvcDiv(phiv_pos1,phiv_neg1,rho));
-
-        fv::goudonovFluxScheme sTest(mesh,phi,p,U,rho);
-        sTest.calculate(pAve,rhoAve,UAve);
-
-
+        fv::goudonovFluxScheme flux(mesh,phi,p,U,rho);
+        flux.calculate(pAve,rhoAve,UAve);
 
         surfaceScalarField rhoFlux(rhoAve*(UAve & mesh.Sf()));
         surfaceVectorField UFlux(rhoFlux*UAve + pAve*mesh.Sf());
+        volScalarField h0(thermo.he(p,0*T));
         surfaceScalarField EFlux((UAve & mesh.Sf())*(pAve/(1.4-1) + 0.5*rhoAve*magSqr(UAve) + pAve));
 
-		//#include "cellDebug.H"
+		#include "cellDebug.H"
 
         volScalarField muEff(turbulence->muEff());
         volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U)))); //part of equation.4
 
         // --- Solve density
         solve(fvm::ddt(rho) + fvc::div(rhoFlux));
-        //solve(fvm::ddt(rho) + fvc::div(phiv_pos1,rho)); //equation.1
-        //solve(fvm::ddt(rho) + kurg.fvcDiv(phiv_pos1,phiv_neg1,rho)); //equation.1
-        //solve(fvm::ddt(rho) + fvc::div(phi)); //equation.1
-        //solve(fvm::ddt(rho) + fvc::div(phi1) + divphi2); //equation.1
-        rho.relax();
+        //rho.relax();
 
         // --- Solve momentum
         solve(fvm::ddt(rhoU) + fvc::div(UFlux));
-        //solve(fvm::ddt(rhoU) + fvc::div(phiv_pos1,rhoU)
-        //        		+ fvc::div(kurg.interpolate(a_pos,a_neg,p)*mesh.Sf())); //equation.2 inviscid
-        /*solve(fvm::ddt(rhoU) + kurgV.fvcDiv(phiv_pos1,phiv_neg1,rhoU)
-        		+ fvc::div(kurg.interpolate(a_pos,a_neg,p)*mesh.Sf()));*/ //equation.2 inviscid
-        //solve(fvm::ddt(rhoU) + fvc::div(phiUp)); //equation.2 inviscid
-        //solve(fvm::ddt(rhoU) + fvc::div(phiUp1) + divphiUp2); //equation.2 inviscid
-        rhoU.relax();
+        //rhoU.relax();
 
         U.dimensionedInternalField() =
             rhoU.dimensionedInternalField()
@@ -247,8 +122,6 @@ int main(int argc, char *argv[])
 
         if (!inviscid)
         {
-        	//volVectorField& U0 = U.oldTime();
-        	//U0 = U;
         	fvMatrix<vector> UEquation(
         		fvm::ddt(rho, U) - fvc::ddt(rho, U)
               - fvm::laplacian(muEff, U)
@@ -283,7 +156,7 @@ int main(int argc, char *argv[])
                 	fvc::interpolate(muEff)*mesh.magSf()*fvc::snGrad(U)
               	  + (mesh.Sf() & fvc::interpolate(tauMC))
             		)
-            		& (a_pos*U_pos + a_neg*U_neg);
+            		& UAve; //(a_pos*U_pos + a_neg*U_neg);
 
         solve
 		(
@@ -291,27 +164,7 @@ int main(int argc, char *argv[])
 			+ fvc::div(EFlux)
 			- fvc::div(sigmaDotU)
 		);
-        /*solve
-		(
-			fvm::ddt(rhoE)
-			+ fvc::div(phiv_pos1,rho*(e + 0.5*magSqr(U)) + p,"kurg")
-    		+ fvc::div(kurg.interpolate(aSf,-aSf,p))
-			- fvc::div(sigmaDotU)
-		);*/
-        /*solve
-		(
-			fvm::ddt(rhoE)
-			+ fvc::div(phiEp)
-			- fvc::div(sigmaDotU)
-		);*/
-        /*solve
-        (
-			fvm::ddt(rhoE)
-			+ fvc::div(phiEp1)
-			+ divphiEp2
-			- fvc::div(sigmaDotU)
-        );*/
-        rhoE.relax();
+        //rhoE.relax();
 
         e = rhoE/rho - 0.5*magSqr(U);
         e.correctBoundaryConditions();
@@ -371,10 +224,12 @@ int main(int argc, char *argv[])
             rhoE = rho*(e + 0.5*magSqr(U));
         }
 
+        Info << p[0] << " ";
         p.dimensionedInternalField() =
             rho.dimensionedInternalField()
            /psi.dimensionedInternalField();
         p.correctBoundaryConditions();
+        Info << p[0] << " " << (e[0]*(1.4-1)) << endl;
 
         rho.boundaryField() = psi.boundaryField()*p.boundaryField();
         if(min(rho).value()<rhomin)
@@ -389,18 +244,6 @@ int main(int argc, char *argv[])
 		}
 
         turbulence->correct();
-
-        /*phiEp_e = aphiv_pos*rho_pos*e_pos + aphiv_neg*rho_neg*e_neg;
-        phiEp_U = aphiv_pos*rho_pos*0.5*magSqr(U_pos) + aphiv_neg*rho_neg*0.5*magSqr(U_neg);
-        phiEp_p = aphiv_pos*p_pos + aphiv_neg*p_neg + aSf*p_pos - aSf*p_neg;
-        divphiEp = fvc::div(phiEp);
-        divphi = fvc::div(phi);
-        diffT = (-fvc::interpolate(turbulence->alphaEff())*fvc::snGrad(e) +
-        	fvc::interpolate(turbulence->alpha())*fvc::snGrad(e)
-        	- fvc::interpolate(thermo.Cp()*muEff/Pr)*fvc::snGrad(T))*mesh.magSf();
-        ddtrho = fvc::ddt(rho);
-        ddtrhoE = fvc::ddt(rho,e);
-        divphiEp1 = fvc::div(phiEp);*/
 
         runTime.write();
 
