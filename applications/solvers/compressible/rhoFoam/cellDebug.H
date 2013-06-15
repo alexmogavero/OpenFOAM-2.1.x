@@ -9,13 +9,15 @@
 const labelList& faceOwner = mesh.faceOwner();
 const labelList& faceNeigh = mesh.neighbour();
 const polyBoundaryMesh& boundary = mesh.boundaryMesh();
-const int cellId = 119;
+const int cellId = 0;
 
-const surfaceScalarField& F1 = phiEp;
-const surfaceScalarField& F2 = phi;
+const surfaceScalarField& F1 = rhoFlux;
+const surfaceScalarField& F2 = EFlux;
+const surfaceScalarField& Q1 = rhoAve;
+const surfaceScalarField& Q2 = pAve;
 
 Info << "Cell faces detail for cell# " << cellId << endl;
-Info << "ID\tinfo\t\t\tphiEp1\t\t\tphiEp2\t\t\trho_pos\t\trho_neg\t\te_pos\t\te_neg" << endl;
+Info << "ID\tinfo\t\t\tF1\t\t\tF2\t\t\tQ1\t\tQ2\ " << endl;
 
 forAll(faceOwner,i)
 {
@@ -26,10 +28,10 @@ forAll(faceOwner,i)
 			Info << i << "\t" << "Owner " << faceNeigh[i] << "\t";
 			Info << "\t" << F1[i];
 			Info << "\t" << F2[i];
-			Info << "\t" << rho_pos[i];
-			Info << "\t" << rho_neg[i];
-			Info << "\t" << e_pos[i];
-			Info << "\t" << e_neg[i];
+			Info << "\t" << Q1[i];
+			Info << "\t" << Q2[i];
+			//Info << "\t" << e_pos[i];
+			//Info << "\t" << e_neg[i];
 			Info << endl;
 		}else
 		{
@@ -37,14 +39,17 @@ forAll(faceOwner,i)
 			{
 				if(boundary[boundary.whichPatch(i)].faceCells()[ii]==cellId)
 				{
-					Info << ii << "\t" << boundary.names()[boundary.whichPatch(i)];
-					Info << "\t" << F1.boundaryField()[boundary.whichPatch(i)][ii];
-					Info << "\t" << F2.boundaryField()[boundary.whichPatch(i)][ii];
-					Info << "\t" << rho_pos.boundaryField()[boundary.whichPatch(i)][ii];
-					Info << "\t" << rho_neg.boundaryField()[boundary.whichPatch(i)][ii];
-					Info << "\t" << e_pos.boundaryField()[boundary.whichPatch(i)][ii];
-					Info << "\t" << e_neg.boundaryField()[boundary.whichPatch(i)][ii];
-					Info << endl;
+					if(F1.boundaryField()[boundary.whichPatch(i)].size()>0)
+					{
+						Info << ii << "\t" << boundary.names()[boundary.whichPatch(i)];
+						Info << "\t" << F1.boundaryField()[boundary.whichPatch(i)][ii];
+						Info << "\t" << F2.boundaryField()[boundary.whichPatch(i)][ii];
+						Info << "\t" << Q1.boundaryField()[boundary.whichPatch(i)][ii];
+						Info << "\t" << Q2.boundaryField()[boundary.whichPatch(i)][ii];
+						//Info << "\t" << e_pos.boundaryField()[boundary.whichPatch(i)][ii];
+						//Info << "\t" << e_neg.boundaryField()[boundary.whichPatch(i)][ii];
+						Info << endl;
+					}
 				}
 			}
 		}
@@ -60,19 +65,20 @@ forAll(faceNeigh,i)
 			Info << i << "\t" << "Neighbour " << faceOwner[i] << "\t";
 			Info << "\t" << -F1[i];
 			Info << "\t" << -F2[i];
-			Info << "\t" << rho_pos[i];
-			Info << "\t" << rho_neg[i];
-			Info << "\t" << e_pos[i];
-			Info << "\t" << e_neg[i];
+			Info << "\t" << Q1[i];
+			Info << "\t" << Q2[i];
+			//Info << "\t" << e_pos[i];
+			//Info << "\t" << e_neg[i];
 			Info << endl;
 		}
 	}
 }
-//volScalarField divphiEp_e(fvc::div(phiEp_e));
+volScalarField divF1(fvc::div(F1));
+volScalarField divF2(fvc::div(F2));
 DimensionedField<double,volMesh> volume(mesh.V());
-Info << "divphiEp " << divphiEp[cellId]*volume[cellId] << " divphiEp2 " << divphiEp2[cellId]*volume[cellId] << endl;
+Info << "divF1 " << divF1[cellId]*volume[cellId] << " divF2 " << divF2[cellId]*volume[cellId] << endl;
 
-//face interpolation comparison
+/*//face interpolation comparison
 const surfaceScalarField& var_pos = e_pos;
 const surfaceScalarField& var_neg = e_neg;
 const volScalarField& var = e;
@@ -106,4 +112,4 @@ for(i=0;i<3;i++)
 			" " << var_pos[faceID[i]] - var_neg[faceID[i]] <<
 			" " << l()[faceID[i]] << endl;
 	Info << cellID[i+1] << " " << mesh.C()[cellID[i+1]][0] << " " << var[cellID[i+1]] << " " << varG[cellID[i+1]][0] << endl;
-}
+}*/
