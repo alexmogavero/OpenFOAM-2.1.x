@@ -15,7 +15,7 @@ const surfaceScalarField& F1 = rhoFlux;
 const surfaceScalarField& F2 = EFlux;
 const surfaceScalarField& Q1 = rhoAve;
 const surfaceScalarField& Q2 = pAve;
-
+const surfaceScalarField Q3 = UAve.component(vector::X);
 Info << "Cell faces detail for cell# " << cellId << endl;
 Info << "ID\tinfo\t\t\tF1\t\t\tF2\t\t\tQ1\t\tQ2\ " << endl;
 
@@ -30,7 +30,7 @@ forAll(faceOwner,i)
 			Info << "\t" << F2[i];
 			Info << "\t" << Q1[i];
 			Info << "\t" << Q2[i];
-			//Info << "\t" << e_pos[i];
+			Info << "\t" << Q3[i];
 			//Info << "\t" << e_neg[i];
 			Info << endl;
 		}else
@@ -46,7 +46,7 @@ forAll(faceOwner,i)
 						Info << "\t" << F2.boundaryField()[boundary.whichPatch(i)][ii];
 						Info << "\t" << Q1.boundaryField()[boundary.whichPatch(i)][ii];
 						Info << "\t" << Q2.boundaryField()[boundary.whichPatch(i)][ii];
-						//Info << "\t" << e_pos.boundaryField()[boundary.whichPatch(i)][ii];
+						Info << "\t" << Q3.boundaryField()[boundary.whichPatch(i)][ii];
 						//Info << "\t" << e_neg.boundaryField()[boundary.whichPatch(i)][ii];
 						Info << endl;
 					}
@@ -67,7 +67,7 @@ forAll(faceNeigh,i)
 			Info << "\t" << -F2[i];
 			Info << "\t" << Q1[i];
 			Info << "\t" << Q2[i];
-			//Info << "\t" << e_pos[i];
+			Info << "\t" << Q3[i];
 			//Info << "\t" << e_neg[i];
 			Info << endl;
 		}
