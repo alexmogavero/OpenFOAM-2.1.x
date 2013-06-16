@@ -91,7 +91,8 @@ int main(int argc, char *argv[])
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        fv::goudonovFluxScheme flux(mesh,phi,p,U,rho);
+        fv::wafFluxScheme flux(mesh,phi,p,U,rho);
+        flux.test();
         flux.calculate(pAve,rhoAve,UAve);
 
         surfaceScalarField rhoFlux(rhoAve*(UAve & mesh.Sf()));
