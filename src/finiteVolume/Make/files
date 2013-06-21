@@ -347,6 +347,13 @@ $(convectionSchemes)/centralConvectionSchemes/centralConvectionScheme/centralCon
 $(convectionSchemes)/centralConvectionSchemes/kurganovConvectionScheme/kurganovConvectionSchemes.C
 $(convectionSchemes)/centralConvectionSchemes/corrKurganovConvectionScheme/corrKurganovConvectionSchemes.C
 
+fluxSchemes = finiteVolume/fluxSchemes
+$(fluxSchemes)/fluxScheme/fluxSchemes.C
+$(fluxSchemes)/goudonovFluxScheme/goudonovFluxSchemes.C
+$(fluxSchemes)/wasFluxScheme/wasFluxSchemes.C
+$(fluxSchemes)/riemannSolvers/exactRiemannSolver/exactRiemannSolvers.C
+$(fluxSchemes)/riemannSolvers/exactRiemannSolver/exactRiemannSolver.C
+
 laplacianSchemes = finiteVolume/laplacianSchemes
 $(laplacianSchemes)/laplacianScheme/laplacianSchemes.C
 $(laplacianSchemes)/gaussLaplacianScheme/gaussLaplacianSchemes.C
