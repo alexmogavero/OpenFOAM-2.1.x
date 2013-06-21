@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    rhoCentralFoam
+    rhoFoam
 
 Description
     Density-based compressible flow solver based on central-upwind schemes of
@@ -43,17 +43,18 @@ Description
 #include "Minmod.H"
 #include "kurganovConvectionScheme.H"
 
-#include "exactReinmannSolver.H"
-#include "wafFluxScheme.H"
+//#include "fluxScheme.H"
+//#include "exactReinmannSolver.H"
+//#include "wafFluxScheme.H"
 #include "goudonovFluxScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-const Foam::word fv::exactReinmannSolver::typeName = "ExactReinmann";
-const Foam::word fv::wafFluxScheme::typeName = "WAF";
-const Foam::word fv::goudonovFluxScheme::typeName = "WAF";
+//const Foam::word fv::exactReinmannSolver::typeName = "ExactReinmann";
+//const Foam::word fv::wafFluxScheme::typeName = "WAF";
+//const Foam::word fv::goudonovFluxScheme::typeName = "WAF";
 int main(int argc, char *argv[])
 {
-	Info<< "\n---------Version 2.0--------\n" << endl;
+	Info<< "\n---------Version 0.0--------\n" << endl;
     #include "setRootCase.H"
 
     #include "createTime.H"
@@ -64,7 +65,7 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    #include "readFluxScheme.H"
+    //#include "readFluxScheme.H"
 
     dimensionedScalar v_zero("v_zero", dimVolume/dimTime, 0.0);
 
@@ -91,9 +92,9 @@ int main(int argc, char *argv[])
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        fv::wafFluxScheme flux(mesh,phi,p,U,rho);
-        flux.test();
-        flux.calculate(pAve,rhoAve,UAve);
+        //volScalarField aa = fvc::div(phiv,p,"flux");
+        tmp<fv::fluxScheme<scalar> > flux = fv::fluxScheme<scalar>::New(mesh,p,U,rho,mesh.divScheme("flux"));
+        flux().calculate(pAve,rhoAve,UAve);
 
         surfaceScalarField rhoFlux(rhoAve*(UAve & mesh.Sf()));
         surfaceVectorField UFlux(rhoFlux*UAve + pAve*mesh.Sf());
