@@ -9,15 +9,15 @@
 const labelList& faceOwner = mesh.faceOwner();
 const labelList& faceNeigh = mesh.neighbour();
 const polyBoundaryMesh& boundary = mesh.boundaryMesh();
-const int cellId = 0;
+const int cellId = 118;
 
 const surfaceScalarField& F1 = rhoFlux;
-const surfaceScalarField& F2 = EFlux;
-const surfaceScalarField& Q1 = rhoAve;
-const surfaceScalarField& Q2 = pAve;
-const surfaceScalarField Q3 = UAve.component(vector::X);
+const surfaceScalarField F2 = UFlux.component(vector::X);
+const surfaceScalarField& Q1 = pAve;
+const surfaceScalarField Q2 = UAve.component(vector::X);
+const surfaceScalarField Q3 = UAve.component(vector::Y);
 Info << "Cell faces detail for cell# " << cellId << endl;
-Info << "ID\tinfo\t\t\tF1\t\t\tF2\t\t\tQ1\t\tQ2\ " << endl;
+Info << "ID\tinfo\t\t\tF1\t\t\tF2\t\t\tQ1\t\tQ2\t\tQ3 " << endl;
 
 forAll(faceOwner,i)
 {
