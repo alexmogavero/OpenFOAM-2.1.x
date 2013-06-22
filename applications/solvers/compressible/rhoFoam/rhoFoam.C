@@ -174,20 +174,27 @@ int main(int argc, char *argv[])
         //TODO limit the energy starting from the min and max Temperature
         double emax;
 		double emin;
+		bool eLimited = false;
 		mesh.schemesDict().readIfPresent("emax", emax);
 		mesh.schemesDict().readIfPresent("emin", emin);
 		if(min(e).value()<emin)
 		{
 			Info << "e limited to " << emin << " it was " << min(e).value() << endl;
 			e.max(emin);
+			eLimited = true;
 		}
 		if(max(e).value()>emax)
 		{
 			Info << "e limited to " << emax << " it was " << max(e).value() << endl;
 			e.min(emax);
+			eLimited = true;
 		}
 		thermo.correct();
 
+		if(eLimited)
+		{
+			rhoE = rho*(e + 0.5*magSqr(U));
+		}
         rhoE.boundaryField() =
             rho.boundaryField()*
             (
