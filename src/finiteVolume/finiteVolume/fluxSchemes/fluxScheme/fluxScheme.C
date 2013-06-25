@@ -55,7 +55,7 @@ template<class Type>
 tmp<fluxScheme<Type> > fluxScheme<Type>::New
 (
     const fvMesh& mesh,
-    const volScalarField& p,
+    const basicThermo& thermo,
     const volVectorField& U,
     const volScalarField& rho,
     Istream& schemeData
@@ -100,66 +100,8 @@ tmp<fluxScheme<Type> > fluxScheme<Type>::New
             << exit(FatalIOError);
     }
 
-    return cstrIter()(mesh, p, U, rho, schemeData);
+    return cstrIter()(mesh, thermo, U, rho, schemeData);
 }
-
-
-/*tmp<fluxScheme > fluxScheme::New
-(
-    const fvMesh& mesh,
-    const typename multivariateSurfaceInterpolationScheme<Type>::
-        fieldTable& fields,
-    const surfaceScalarField& faceFlux,
-    Istream& schemeData
-)
-{
-    if (fv::debug)
-    {
-        Info<< "fluxScheme<Type>::New"
-               "(const fvMesh&, "
-               "const typename multivariateSurfaceInterpolationScheme<Type>"
-               "::fieldTable&, const surfaceScalarField&, Istream&) : "
-               "constructing fluxScheme<Type>"
-            << endl;
-    }
-
-    if (schemeData.eof())
-    {
-        FatalIOErrorIn
-        (
-            "fluxScheme<Type>::New"
-               "(const fvMesh&, "
-               "const typename multivariateSurfaceInterpolationScheme<Type>"
-               "::fieldTable&, const surfaceScalarField&, Istream&)",
-            schemeData
-        )   << "Convection scheme not specified" << endl << endl
-            << "Valid convection schemes are :" << endl
-            << MultivariateConstructorTablePtr_->sortedToc()
-            << exit(FatalIOError);
-    }
-
-    const word schemeName(schemeData);
-
-    typename MultivariateConstructorTable::iterator cstrIter =
-        MultivariateConstructorTablePtr_->find(schemeName);
-
-    if (cstrIter == MultivariateConstructorTablePtr_->end())
-    {
-        FatalIOErrorIn
-        (
-            "fluxScheme<Type>::New"
-            "(const fvMesh&, "
-            "const typename multivariateSurfaceInterpolationScheme<Type>"
-            "::fieldTable&, const surfaceScalarField&, Istream&)",
-            schemeData
-        )   << "Unknown convection scheme " << schemeName << nl << nl
-            << "Valid convection schemes are :" << endl
-            << MultivariateConstructorTablePtr_->sortedToc()
-            << exit(FatalIOError);
-    }
-
-    return cstrIter()(mesh, fields, faceFlux, schemeData);
-}*/
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

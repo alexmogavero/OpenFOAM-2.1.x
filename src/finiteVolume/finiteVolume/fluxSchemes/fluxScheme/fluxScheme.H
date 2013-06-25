@@ -41,6 +41,7 @@ SourceFiles
 #include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 #include "multivariateSurfaceInterpolationScheme.H"
+#include "basicThermo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -85,28 +86,13 @@ public:
             Istream,
             (
                 const fvMesh& mesh,
-                const volScalarField& p,
+                const basicThermo& thermo,
                 const volVectorField& U,
                 const volScalarField& rho,
                 Istream& schemeData
             ),
-            (mesh, p, U, rho, schemeData)
+            (mesh, thermo, U, rho, schemeData)
         );
-
-        /*declareRunTimeSelectionTable
-        (
-            tmp,
-            fluxScheme,
-            Multivariate,
-            (
-                const fvMesh& mesh,
-                const typename multivariateSurfaceInterpolationScheme<Type>::
-                    fieldTable& fields,
-                const surfaceScalarField& faceFlux,
-                Istream& schemeData
-            ),
-            (mesh, fields, faceFlux, schemeData)
-        );*/
 
 
     // Constructors
@@ -130,23 +116,11 @@ public:
         static tmp<fluxScheme<Type> > New
         (
             const fvMesh& mesh,
-            const volScalarField& p,
+            const basicThermo& thermo,
             const volVectorField& U,
             const volScalarField& rho,
             Istream& schemeData
         );
-
-
-        //- Return a pointer to a new multivariate fluxScheme
-        //  created on freestore
-        /*static tmp<fluxScheme > New
-        (
-            const fvMesh& mesh,
-            const typename multivariateSurfaceInterpolationScheme<Type>::
-                fieldTable& fields,
-            const surfaceScalarField& faceFlux,
-            Istream& schemeData
-        );*/
 
 
     //- Destructor
