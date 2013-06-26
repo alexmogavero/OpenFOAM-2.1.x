@@ -96,7 +96,7 @@ exactRiemannSolver::pStar
 	const double omega = 0.5;
 	double rVal=1;
 
-	if(exactRiemannSolver::debug==1)
+	if(exactRiemannSolver::debug)
 	{
 		Info << "exactRiemannSolver::pStar(double p)" << endl;
 		Info << "p\t\trP\t\trVal" << endl;
@@ -129,7 +129,7 @@ exactRiemannSolver::pStar
 			p = p0 + omega*(p - p0);  //underRelax
 		}
 
-		if(exactRiemannSolver::debug==1)
+		if(exactRiemannSolver::debug)
 		{
 			Info << p << " " << rP << " " << rVal << endl;
 		}
@@ -316,7 +316,7 @@ void exactRiemannSolver::speed
 			aStarR = 0.0;
 		}else
 		{
-			aStarR = ::sqrt(gamma_*pStar_/rhoStarL_);
+			aStarR = ::sqrt(gamma_*pStar_/rhoStarR_);
 		}
 		speed_[3] = uStarR_ + aStarR;	//eq.4.62
 		speed_[4] = uR_ + aR;			//eq.4.62
@@ -324,16 +324,15 @@ void exactRiemannSolver::speed
 
 	//TODO to decide if it is worth to keep this check, since it may be resources consuming
 	double toll = 1e-6;
-	for(int i=0; i<3; i++)
+	for(int i=0; i<4; i++)
 	{
 		if(speed_[i+1]-speed_[i] < -toll*::fabs(speed_[i]))
 		{
 			Info << "Warning: Characteristic speeds not sorted." << endl;
-			Info << speed_[0] << " " << speed_[1] << " " << speed_[2] << " " << speed_[3] << endl;
+			Info << speed_[0] << " " << speed_[1] << " " << speed_[2] << " " << speed_[3] << " " << speed_[4] << endl;
 			break;
 		}
 	}
-
 }
 
 double exactRiemannSolver::p
