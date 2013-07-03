@@ -49,9 +49,11 @@ SourceFiles
 #include "fvcGrad.H"
 #include "fluxScheme.H"
 #include "wallFvPatch.H"
+#include "symmetryFvPatch.H"
+#include "wedgeFvPatch.H"
 #include "basicThermo.H"
 #include "fvCFD.H"
-#include "pureMixture.H"
+//#include "pureMixture.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -194,6 +196,9 @@ class wasFluxScheme
 
         void setBoundary
         (
+			const volVectorField& gradP,
+			const volTensorField& gradU,
+			const volVectorField& gradRho
         );
 
 protected:
@@ -204,87 +209,6 @@ public:
     TypeName("WAS");
 
     // Constructors
-
-        /*wasFluxScheme
-        (
-        	const fvMesh& mesh,
-        	const volScalarField& p,
-        	const volVectorField& U,
-        	const volScalarField& rho,
-        	Istream& schemeData
-        )
-		:
-			fluxScheme<Type>(mesh),
-			p_(p),
-			pB_(p_.boundaryField()),
-			pBB_(p_.boundaryField()),
-			U_(U),
-			UB_(U_.boundaryField()),
-			UBB_(U_.boundaryField()),
-			rho_(rho),
-			rhoB_(rho_.boundaryField()),
-			rhoBB_(rho_.boundaryField()),
-			p0_
-			(
-			    IOobject
-			    (
-			        "p1",
-			        mesh.time().timeName(),
-			        mesh
-			    ),
-			    mesh,
-			    dimensionedScalar("p1", p_.dimensions(), 0.0)
-			),
-			p0B_(p0_.boundaryField()),
-			p1_(p0_),
-			p1B_(p1_.boundaryField()),
-			p2_(p0_),
-			p2B_(p2_.boundaryField()),
-			p3_(p0_),
-			p3B_(p3_.boundaryField()),
-			rho0_
-			(
-				IOobject
-				(
-					"rho1",
-					mesh.time().timeName(),
-					mesh
-				),
-				mesh,
-				dimensionedScalar("rho1", rho_.dimensions(), 0.0)
-			),
-			rho0B_(rho0_.boundaryField()),
-			rho1_(rho0_),
-			rho1B_(rho1_.boundaryField()),
-			rho2_(rho0_),
-			rho2B_(rho2_.boundaryField()),
-			rho3_(rho0_),
-			rho3B_(rho3_.boundaryField()),
-			u0_
-			(
-				IOobject
-				(
-					"u1",
-					mesh.time().timeName(),
-					mesh
-				),
-				mesh,
-				dimensionedScalar("u1", U_.dimensions(), 0.0)
-			),
-			u0B_(u0_.boundaryField()),
-			u1_(u0_),
-			u1B_(u1_.boundaryField()),
-			u2_(u0_),
-			u2B_(u2_.boundaryField()),
-			u3_(u0_),
-			u3B_(u3_.boundaryField()),
-			speed0_(u0_),
-			speed0B_(speed0_.boundaryField()),
-			speed1_(u0_),
-			speed1B_(speed1_.boundaryField()),
-			speed2_(u0_),
-			speed2B_(speed2_.boundaryField())
-        {}*/
 
         wasFluxScheme
 		(
