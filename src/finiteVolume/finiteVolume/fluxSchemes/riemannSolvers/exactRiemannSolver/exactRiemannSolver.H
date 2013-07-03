@@ -143,6 +143,10 @@ class exactRiemannSolver
 			const exactRiemannSolver::wave&
 		);
 
+		void check
+		(
+		)const;
+
 protected:
 
 public:
