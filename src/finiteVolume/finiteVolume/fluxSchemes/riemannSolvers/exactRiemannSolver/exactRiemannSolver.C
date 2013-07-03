@@ -223,6 +223,7 @@ void exactRiemannSolver::solve
 (
 )
 {
+	check();
 	pStar_ = pStarTwoRar();
 	setWave(pStar_);
 	if(waveL_==SHOCK || waveR_==SHOCK)
@@ -646,6 +647,43 @@ Foam::word exactRiemannSolver::waveToString
 		break;
 	}
 	return waveStr;
+}
+
+void exactRiemannSolver::check
+()const
+{
+	if(pL_<=0)
+	{
+		FatalErrorIn
+		(
+			"exactRiemannSolver::check()"
+		)   << "pL_ = " << pL_ << "!"
+			<< exit(FatalError);
+	}
+	if(rhoL_<=0)
+	{
+		FatalErrorIn
+		(
+			"exactRiemannSolver::check()"
+		)   << "rhoL_ = " << rhoL_ << "!"
+			<< exit(FatalError);
+	}
+	if(pR_<=0)
+	{
+		FatalErrorIn
+		(
+			"exactRiemannSolver::check()"
+		)   << "pR_ = " << pR_ << "!"
+			<< exit(FatalError);
+	}
+	if(rhoR_<=0)
+	{
+		FatalErrorIn
+		(
+			"exactRiemannSolver::check()"
+		)   << "rhoR_ = " << rhoR_ << "!"
+			<< exit(FatalError);
+	}
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
