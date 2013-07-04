@@ -53,7 +53,6 @@ SourceFiles
 #include "wedgeFvPatch.H"
 #include "basicThermo.H"
 #include "fvCFD.H"
-//#include "pureMixture.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
