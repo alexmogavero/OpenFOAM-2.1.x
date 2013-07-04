@@ -154,6 +154,34 @@ surfaceVectorField UAve
 	dimensionedVector("UAve", U.dimensions(), vector::zero)
 );
 
+surfaceScalarField eAve
+(
+	IOobject
+	(
+		"eAve",
+		runTime.timeName(),
+		mesh,
+		IOobject::NO_READ,
+		IOobject::AUTO_WRITE
+	),
+	mesh,
+	dimensionedScalar("eAve", e.dimensions(), 0.0)
+);
+
+surfaceScalarField TAve
+(
+	IOobject
+	(
+		"TAve",
+		runTime.timeName(),
+		mesh,
+		IOobject::NO_READ,
+		IOobject::AUTO_WRITE
+	),
+	mesh,
+	dimensionedScalar("TAve", T.dimensions(), 0.0)
+);
+
 
 #include "debugFields.H"
 
