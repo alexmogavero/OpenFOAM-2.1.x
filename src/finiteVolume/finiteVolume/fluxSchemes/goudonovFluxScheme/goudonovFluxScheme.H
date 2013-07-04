@@ -43,6 +43,7 @@ SourceFiles
 #include "exactRiemannSolver.H"
 #include "fvcGrad.H"
 #include "fluxScheme.H"
+#include "fvCFD.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -66,6 +67,7 @@ class goudonovFluxScheme
 		public fv::fluxScheme<Type> //refCount
 {
     // Private data
+		const basicThermo& thermo_;
 		const volScalarField& p_;
 		const volVectorField& U_;
 		const volScalarField& rho_;
@@ -89,20 +91,20 @@ public:
     // Constructors
 
         goudonovFluxScheme
-        (
-        	const fvMesh& mesh,
-        	//const surfaceScalarField& flux,
-        	const volScalarField& p,
-        	const volVectorField& U,
-        	const volScalarField& rho,
-        	Istream& schemeData
-        )
+		(
+			const fvMesh& mesh,
+			const basicThermo& thermo,
+			const volVectorField& U,
+			const volScalarField& rho,
+			Istream& schemeData
+		)
 		:
 			fluxScheme<Type>(mesh),
-			p_(p),
+			thermo_(thermo),
+			p_(thermo_.p()),
 			U_(U),
 			rho_(rho)
-        {}
+		{}
 
         virtual ~goudonovFluxScheme();
 

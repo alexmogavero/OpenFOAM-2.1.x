@@ -48,6 +48,9 @@ goudonovFluxScheme<Type>::calculate
 	const fvMesh& mesh = p_.mesh();
 	const labelUList& owner = mesh.owner();
 	const labelUList& neighbour = mesh.neighbour();
+	const tmp<volScalarField> Cp = thermo_.Cp();
+	const tmp<volScalarField> Cv = thermo_.Cv();
+	const surfaceScalarField gamma(fvc::interpolate(Cp()/Cv()));
 
 	forAll(pAve,face)
 	{
@@ -60,14 +63,6 @@ goudonovFluxScheme<Type>::calculate
 		const vector vL = U_[own] - uL*n;
 		const vector vR = U_[nei] - uR*n;
 
-		//TODO implement gamma from thermal model
-		/*if(face==308 || face==68)
-		{
-			exactRiemannSolver::debug = true;
-		}else
-		{
-			exactRiemannSolver::debug = false;
-		}*/
 		exactRiemannSolver riemann
 		        (
 		        	p_[own],
@@ -76,7 +71,7 @@ goudonovFluxScheme<Type>::calculate
 		        	rho_[nei],
 		        	uL,
 		        	uR,
-		        	1.4
+		        	gamma[face]
 		        );
 		riemann.solve();
 
@@ -103,6 +98,7 @@ goudonovFluxScheme<Type>::calculate
 		const scalarField rhoR = rho_.boundaryField()[patchi];
 		const vectorField UL = U_.boundaryField()[patchi].patchInternalField();
 		const vectorField UR = 2*U_.boundaryField()[patchi] - UL;
+		const scalarField gammab = gamma.boundaryField()[patchi];
 		scalarField& pAveB = pAve.boundaryField()[patchi];
 		scalarField& rhoAveB = rhoAve.boundaryField()[patchi];
 		vectorField& UAveB = UAve.boundaryField()[patchi];
@@ -115,8 +111,7 @@ goudonovFluxScheme<Type>::calculate
 			const vector vL = UL[face] - uL*n;
 			const vector vR = UR[face] - uR*n;
 
-			//TODO implement gamma from thermal model
-			exactRiemannSolver riemann(pL[face],pR[face],rhoL[face],rhoR[face],uL,uR,1.4);
+			exactRiemannSolver riemann(pL[face],pR[face],rhoL[face],rhoR[face],uL,uR,gammab[face]);
 			riemann.solve();
 
 			pAveB[face] = riemann.p(0);
