@@ -235,7 +235,7 @@ wasFluxScheme<Type>::calculate
 			vector vAve = averageV(speed1[face],vL,vR,gradVL,gradVR,d[face]);
 			UAveB[face] = uAve*n + vAve;
 
-			if((mesh.boundary()[patchi].name()=="frontAndBack_pos" || mesh.boundary()[patchi].name()=="frontAndBack_neg")
+			/*if((mesh.boundary()[patchi].name()=="frontAndBack_pos" || mesh.boundary()[patchi].name()=="frontAndBack_neg")
 					&& (face==21420))
 			{
 				Info << face << endl;
@@ -246,7 +246,7 @@ wasFluxScheme<Type>::calculate
 				Info << rhoLB[0] << " " << rhoLB[1] << " " << rhoLB[2] << " " << rhoLB[3] << endl;
 				Info << rhoB[0] << " " << rhoB[1] << " " << rhoB[2] << " " << rhoB[3] << endl;
 				Info << rhoRB[0] << " " << rhoRB[1] << " " << rhoRB[2] << " " << rhoRB[3] << endl;
-			}
+			}*/
 		}
 	}
 }
