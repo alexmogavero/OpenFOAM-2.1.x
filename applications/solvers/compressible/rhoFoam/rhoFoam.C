@@ -45,13 +45,12 @@ Description
 
 //#include "fluxScheme.H"
 //#include "exactReinmannSolver.H"
-//#include "wafFluxScheme.H"
+#include "wasFluxScheme.H"
 #include "goudonovFluxScheme.H"
+#include "ePsiThermo.H"
+#include "specie.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-//const Foam::word fv::exactReinmannSolver::typeName = "ExactReinmann";
-//const Foam::word fv::wafFluxScheme::typeName = "WAF";
-//const Foam::word fv::goudonovFluxScheme::typeName = "WAF";
 int main(int argc, char *argv[])
 {
 	Info<< "\n---------Version 0.0--------\n" << endl;
@@ -74,6 +73,8 @@ int main(int argc, char *argv[])
     while (runTime.run())
     {
     	const float t0 = runTime.elapsedCpuTime();
+    	Info << runTime.cpuTimeIncrement() << endl;
+
     	//store previous iterations for relaxation
     	rho.storePrevIter();
     	rhoU.storePrevIter();
@@ -88,20 +89,35 @@ int main(int argc, char *argv[])
         #include "readTimeControls.H"
         #include "setDeltaT.H"
 
+    	Info << runTime.cpuTimeIncrement() << endl;
         runTime++;
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        //volScalarField aa = fvc::div(phiv,p,"flux");
-        tmp<fv::fluxScheme<scalar> > flux = fv::fluxScheme<scalar>::New(mesh,p,U,rho,mesh.divScheme("flux"));
+        Info << runTime.cpuTimeIncrement() << endl;
+        tmp<fv::fluxScheme<scalar> > flux = fv::fluxScheme<scalar>::New(mesh,thermo,U,rho,mesh.divScheme("flux"));
+        Info << "1-- " << runTime.cpuTimeIncrement() << endl;
         flux().calculate(pAve,rhoAve,UAve);
+        Info << "2-- " << runTime.cpuTimeIncrement() << endl;
 
         surfaceScalarField rhoFlux(rhoAve*(UAve & mesh.Sf()));
         surfaceVectorField UFlux(rhoFlux*UAve + pAve*mesh.Sf());
-        dimensionedScalar e0("e0",e.dimensions(),thermo.e(0*T,1)()[0]);
-        surfaceScalarField EFlux((UAve & mesh.Sf())*(e0*rhoAve + pAve/(1.4-1) + 0.5*rhoAve*magSqr(UAve) + pAve));
+        surfaceScalarField R(fvc::interpolate(thermo.Cp() - thermo.Cv()));
+        TAve = pAve/(R*rhoAve);
+        const labelList& own = mesh.faceOwner();
+        //surfaceScalarField eAve(fvc::interpolate(e));
+        eAve.internalField() = thermo.e(TAve.internalField(),own);
+        forAll(TAve.boundaryField(),patchi)
+        {
+        	eAve.boundaryField()[patchi] = thermo.e(TAve.boundaryField()[patchi],patchi);
+        }
+//        dimensionedScalar e0("e0",e.dimensions(),thermo.e(0*T,1)()[0]);
+//        surfaceScalarField EFlux((UAve & mesh.Sf())*(e0*rhoAve + pAve/(1.4-1) + 0.5*rhoAve*magSqr(UAve) + pAve));
+        surfaceScalarField EFlux((UAve & mesh.Sf())*(eAve*rhoAve + 0.5*rhoAve*magSqr(UAve) + pAve));
+        Info << runTime.cpuTimeIncrement() << endl;
 
 		#include "cellDebug.H"
+        Info << runTime.cpuTimeIncrement() << endl;
 
         volScalarField muEff(turbulence->muEff());
         volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U)))); //part of equation.4
@@ -172,11 +188,17 @@ int main(int argc, char *argv[])
         e.correctBoundaryConditions();
 
         //TODO limit the energy starting from the min and max Temperature
-        double emax;
-		double emin;
+//        double emax;
+//		double emin;
 		bool eLimited = false;
-		mesh.schemesDict().readIfPresent("emax", emax);
-		mesh.schemesDict().readIfPresent("emin", emin);
+		scalarField Tmin(1);
+		scalarField Tmax(1);
+		labelList cell(1);
+		cell[0] = 0;
+		mesh.schemesDict().readIfPresent("Tmax", Tmax[0]);
+		mesh.schemesDict().readIfPresent("Tmin", Tmin[0]);
+		scalar emin  = thermo.e(Tmin,cell)()[0];
+		scalar emax  = thermo.e(Tmax,cell)()[0];
 		if(min(e).value()<emin)
 		{
 			Info << "e limited to " << emin << " it was " << min(e).value() << endl;
@@ -233,12 +255,10 @@ int main(int argc, char *argv[])
             rhoE = rho*(e + 0.5*magSqr(U));
         }
 
-        //Info << p[0] << " ";
         p.dimensionedInternalField() =
             rho.dimensionedInternalField()
            /psi.dimensionedInternalField();
         p.correctBoundaryConditions();
-        //Info << p[0] << " " << (e[0]*(1.4-1)) << endl;
 
         rho.boundaryField() = psi.boundaryField()*p.boundaryField();
         if(min(rho).value()<rhomin)
@@ -256,10 +276,18 @@ int main(int argc, char *argv[])
 
         runTime.write();
 
+        Info << runTime.cpuTimeIncrement() << endl;
+
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
             << "   Time/iter = " << runTime.elapsedCpuTime() - t0 << " s"
             << " iteration = " << runTime.timeIndex() << " "
             << nl << endl;
+
+        /*if(runTime.timeIndex()==616644)
+        {
+        	Info << "writing..." << endl;
+        	runTime.writeNow();
+        }*/
     }
 
     Info<< "End\n" << endl;
