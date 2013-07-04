@@ -60,6 +60,8 @@ wasFluxScheme<Type>::calculate
 	const volVectorField gradRho1(fvc::grad(rho1_));
 	const volVectorField gradRho2(fvc::grad(rho2_));
 	const volVectorField gradRho3(fvc::grad(rho3_));
+	const surfaceVectorField N = mesh.Sf()/mesh.magSf();
+	const volTensorField gradN(fvc::grad(N));
 
 	forAll(p1_,face)
 	{
@@ -78,10 +80,36 @@ wasFluxScheme<Type>::calculate
 		const double rho[4] = {rho0_[face], rho1_[face], rho2_[face], rho3_[face]};
 		const double speed[3] = {speed0_[face], speed1_[face], speed2_[face]};
 
-		const double rhoL[4] = {rho0_[face]-(d & gradRho0[own]), rho1_[face]-(d & gradRho1[own]),
-				rho2_[face]-(d & gradRho2[own]), rho3_[face]-(d & gradRho3[own])};
-		const double rhoR[4] = {rho0_[face]+(d & gradRho0[nei]), rho1_[face]+(d & gradRho1[nei]),
-				rho2_[face]+(d & gradRho2[nei]), rho3_[face]+(d & gradRho3[nei])};
+		const vector nL = n - (d & gradN[own]);
+		double rhoL[4];
+		if((nL & n)>=0)
+		{
+			rhoL[0] = rho0_[face]-(d & gradRho0[own]);
+			rhoL[1] = rho1_[face]-(d & gradRho1[own]);
+			rhoL[2] = rho2_[face]-(d & gradRho2[own]);
+			rhoL[3] = rho3_[face]-(d & gradRho3[own]);
+		}else
+		{
+			rhoL[0] = rho3_[face]-(d & gradRho3[own]);
+			rhoL[1] = rho2_[face]-(d & gradRho2[own]);
+			rhoL[2] = rho1_[face]-(d & gradRho1[own]);
+			rhoL[3] = rho0_[face]-(d & gradRho0[own]);
+		}
+		const vector nR = n + (d & gradN[nei]);
+		double rhoR[4];
+		if((nR & n)>=0)
+		{
+			rhoR[0] = rho0_[face]+(d & gradRho0[nei]);
+			rhoR[1] = rho1_[face]+(d & gradRho1[nei]);
+			rhoR[2] = rho2_[face]+(d & gradRho2[nei]);
+			rhoR[3] = rho3_[face]+(d & gradRho3[nei]);
+		}else
+		{
+			rhoR[0] = rho3_[face]+(d & gradRho3[nei]);
+			rhoR[1] = rho2_[face]+(d & gradRho2[nei]);
+			rhoR[2] = rho1_[face]+(d & gradRho1[nei]);
+			rhoR[3] = rho0_[face]+(d & gradRho0[nei]);
+		}
 
 		weight(w, rho, speed, rhoL, rhoR, d);
 
@@ -109,13 +137,6 @@ wasFluxScheme<Type>::calculate
 	const surfaceScalarField::GeometricBoundaryField& bP = p1_.boundaryField();
 	forAll(bP, patchi)
 	{
-		/*scalarField& pAveB = pAve.boundaryField()[patchi];
-		scalarField& rhoAveB = rhoAve.boundaryField()[patchi];
-		vectorField& UAveB = UAve.boundaryField()[patchi];
-		pAveB = p_.boundaryField()[patchi];
-		rhoAveB = rho_.boundaryField()[patchi];
-		UAveB = U_.boundaryField()[patchi];*/
-
 		const scalarField p0 = p0_.boundaryField()[patchi];
 		const scalarField p1 = p1_.boundaryField()[patchi];
 		const scalarField p2 = p2_.boundaryField()[patchi];
@@ -140,6 +161,7 @@ wasFluxScheme<Type>::calculate
 		const vectorField gradRho3L = gradRho3.boundaryField()[patchi].patchInternalField();
 
 		const vectorField d = 2*mesh.boundary()[patchi].delta();
+		const vectorField nL = N.boundaryField()[patchi] - (d & gradN.boundaryField()[patchi].patchInternalField());
 
 		vectorField UR;
 		tensorField gradUR;
@@ -175,17 +197,29 @@ wasFluxScheme<Type>::calculate
 
 		forAll(pAveB,face)
 		{
+			const vector n = mesh.boundary()[patchi].Sf()[face]/mesh.boundary()[patchi].magSf()[face];
 			double w[3];
 			const double pB[4] = {p0[face], p1[face], p2[face], p3[face]};
 			const double rhoB[4] = {rho0[face], rho1[face], rho2[face], rho3[face]};
 			const double uB[4] = {u0[face], u1[face], u2[face], u3[face]};
 			const double speedB[3] = {speed0[face], speed1[face], speed2[face]};
 
-			const double rhoLB[4] = {rho0[face]-(d[face] & gradRho0L[face]), rho1[face]-(d[face] & gradRho1L[face]),
-					rho2[face]-(d[face] & gradRho2L[face]), rho3[face]-(d[face] & gradRho3L[face])};
-			const double rhoRB[4] = {rho0B[face],rho1B[face],rho2B[face],rho3B[face]};
+			double rhoLB[4];
+			if((n & nL[face])>=0)
+			{
+				rhoLB[0] = rho0[face]-(d[face] & gradRho0L[face]);
+				rhoLB[1] = rho1[face]-(d[face] & gradRho1L[face]);
+				rhoLB[2] = rho2[face]-(d[face] & gradRho2L[face]);
+				rhoLB[3] = rho3[face]-(d[face] & gradRho3L[face]);
+			}else
+			{
+				rhoLB[0] = rho3[face]-(d[face] & gradRho3L[face]);
+				rhoLB[1] = rho2[face]-(d[face] & gradRho2L[face]);
+				rhoLB[2] = rho1[face]-(d[face] & gradRho1L[face]);
+				rhoLB[3] = rho0[face]-(d[face] & gradRho0L[face]);
+			}
 
-			const vector n = mesh.boundary()[patchi].Sf()[face]/mesh.boundary()[patchi].magSf()[face];
+			const double rhoRB[4] = {rho0B[face],rho1B[face],rho2B[face],rho3B[face]};
 
 			weight(w, rhoB, speedB, rhoLB, rhoRB, d[face]);
 
@@ -205,6 +239,7 @@ wasFluxScheme<Type>::calculate
 					&& (face==21420))
 			{
 				Info << face << endl;
+				Info << (n & nL[face]) << endl;
 				Info << uB[0] << " " << uB[1] << " " << uB[2] << " " << uB[3] << " " << uAve << endl;
 				Info << speedB[0] << " " << speedB[1] << " " << speedB[2] << endl;
 				Info << w[0] << " " << w[1] << " " << w[2] << endl;
@@ -238,6 +273,11 @@ wasFluxScheme<Type>::riemann
 		const double uL = U_[own] & n;
 		const double uR = U_[nei] & n;
 
+		if(p_[nei]<=0)
+		{
+			Info << face << " " << own << " " << nei << endl;
+			Info << p_[nei] << endl;
+		}
 		exactRiemannSolver riemann(p_[own],p_[nei],rho_[own],rho_[nei],uL,uR,gamma[face]);
 		riemann.solve();
 
@@ -339,6 +379,11 @@ wasFluxScheme<Type>::riemann
 			const double uL = UL[face] & n;
 			const double uR = UR[face] & n;
 
+			if(pR[face]<=0)
+			{
+				Info << face << " " << mesh.boundary()[patchi].name() << endl;
+				Info << pR[face] << endl;
+			}
 			exactRiemannSolver riemann(pL[face],pR[face],rhoL[face],rhoR[face],uL,uR,gammab[face]);
 			riemann.solve();
 
@@ -364,7 +409,7 @@ wasFluxScheme<Type>::riemann
 			u2B[face] = u[2];
 			u3B[face] = u[3];
 
-			if((mesh.boundary()[patchi].name()=="frontAndBack_pos" || mesh.boundary()[patchi].name()=="frontAndBack_neg")
+			/*if((mesh.boundary()[patchi].name()=="frontAndBack_pos" || mesh.boundary()[patchi].name()=="frontAndBack_neg")
 								&& (face==21420))
 			{
 				Info << face << endl;
@@ -372,12 +417,17 @@ wasFluxScheme<Type>::riemann
 				Info << p0B[face] << " " << p1B[face] << " " << p2B[face] << " " << p3B[face] << endl;
 				Info << rho0B[face] << " " << rho1B[face] << " " << rho2B[face] << " " << rho3B[face] << endl;
 				Info << u0B[face] << " " << u1B[face] << " " << u2B[face] << " " << u3B[face] << endl;
-			}
+			}*/
 
 			if (!bP[patchi].coupled())
 			{
 				const double uRR = URR[face] & n;
 
+				if(pRR[face]<=0)
+				{
+					Info << face << " " << mesh.boundary()[patchi].name() << " R" << endl;
+					Info << pRR[face] << endl;
+				}
 				exactRiemannSolver riemannR(pR[face],pRR[face],rhoR[face],rhoRR[face],uR,uRR,gammab[face]);
 				riemannR.solve();
 
@@ -426,8 +476,7 @@ wasFluxScheme<Type>::setBoundary
 
 		const vectorField d = 2*mesh.boundary()[patchi].delta();
 
-		if ((isA<wallFvPatch>(mesh.boundary()[patchi]) || isA<symmetryFvPatch>(mesh.boundary()[patchi]))
-				|| isA<wedgeFvPatch>(mesh.boundary()[patchi]))
+		if (isA<wallFvPatch>(mesh.boundary()[patchi]) || isA<symmetryFvPatch>(mesh.boundary()[patchi]))
 		{
 			//reflective conditions
 			pB = p_.boundaryField()[patchi].patchInternalField();
@@ -438,6 +487,21 @@ wasFluxScheme<Type>::setBoundary
 					-2*(gradRho.boundaryField()[patchi].patchInternalField() & d);
 			UB = 2*U_.boundaryField()[patchi] - U_.boundaryField()[patchi].patchInternalField();
 			UBB = 2*U_.boundaryField()[patchi] - UB + 2*(d & gradU.boundaryField()[patchi].patchInternalField());
+
+			pBB = max(pBB,0.01*min(p_).value());
+			rhoBB = max(rhoBB,0.01*min(rho_).value());
+		}else if(isA<wedgeFvPatch>(mesh.boundary()[patchi]))
+		{
+			//reflective conditions for 2D axial-symmetric mesh
+			pB = p_.boundaryField()[patchi].patchInternalField();
+			pBB = p_.boundaryField()[patchi].patchInternalField();
+			rhoB = rho_.boundaryField()[patchi].patchInternalField();
+			rhoBB = rho_.boundaryField()[patchi].patchInternalField();
+			UB = 2*U_.boundaryField()[patchi] - U_.boundaryField()[patchi].patchInternalField();
+			UBB = 2*U_.boundaryField()[patchi] - UB + 2*(d & gradU.boundaryField()[patchi].patchInternalField());
+
+			pBB = max(pBB,0.01*min(p_).value());
+			rhoBB = max(rhoBB,0.01*min(rho_).value());
 		}else
 		{
 			//fixed conditions
