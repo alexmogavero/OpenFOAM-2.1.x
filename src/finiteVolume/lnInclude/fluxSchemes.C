@@ -21,12 +21,12 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Description
+    Abstract base class for finite volume calculus convection schemes.
+
 \*---------------------------------------------------------------------------*/
 
-#include "kurganovConvectionScheme.H"
-#include "fvcSurfaceIntegrate.H"
-#include "fvMatrices.H"
-#include "surfaceInterpolationScheme.H"
+#include "fluxScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,34 +39,28 @@ namespace fv
 {
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// Define the constructor function hash tables
 
-template<class Type>
-tmp<GeometricField<Type, fvPatchField, volMesh> >
-kurganovConvectionScheme<Type>::fvcDiv
-(
-    const surfaceScalarField& posFaceFlux,
-    const surfaceScalarField& negFaceFlux,
-    const GeometricField<Type, fvPatchField, volMesh>& vf
-) const
-{
-	surfaceScalarField a_pos(ap_/(ap_ - am_));  //equation.9.b (i.e. Kurganov)
-	surfaceScalarField a_neg(1.0 - a_pos);
-	surfaceScalarField aSf(am_*a_pos);  //(-1)*equation.10.b (i.e. Kurganov)
-	surfaceScalarField aphiv_pos(a_pos*posFaceFlux - aSf);
-	surfaceScalarField aphiv_neg(a_neg*negFaceFlux + aSf);
+#define makeBaseFluxScheme(Type)                                              \
+                                                                              \
+defineTemplateRunTimeSelectionTable                                           \
+(                                                                             \
+    fluxScheme<Type>,                                                         \
+    Istream                                                                   \
+);
+/*                                                                            \
+defineTemplateRunTimeSelectionTable                                           \
+(                                                                             \
+    fluxScheme<Type>,                                                         \
+    Multivariate                                                              \
+);*/
 
-    tmp<GeometricField<Type, fvPatchField, volMesh> > tConvection
-    (
-        fvc::surfaceIntegrate(interpolate(aphiv_pos, aphiv_neg, vf))
-    );
+makeBaseFluxScheme(scalar)
+makeBaseFluxScheme(vector)
+makeBaseFluxScheme(sphericalTensor)
+makeBaseFluxScheme(symmTensor)
+makeBaseFluxScheme(tensor)
 
-    tConvection().rename
-    (
-        "convection(" + posFaceFlux.name() + ',' + negFaceFlux.name() + ',' + vf.name() + ')'
-    );
-
-    return tConvection;
-}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
