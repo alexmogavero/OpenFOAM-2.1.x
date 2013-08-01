@@ -163,6 +163,7 @@ wasFluxScheme<Type>::calculate
 		const vectorField d = 2*mesh.boundary()[patchi].delta();
 		const vectorField nL = N.boundaryField()[patchi] - (d & gradN.boundaryField()[patchi].patchInternalField());
 
+		vectorField nR;
 		vectorField UR;
 		tensorField gradUR;
 		scalarField rho0B;
@@ -171,18 +172,23 @@ wasFluxScheme<Type>::calculate
 		scalarField rho3B;
 		if (bP[patchi].coupled())
 		{
+			// the gradient is calculated by the other cpu thus with opposite boundary normal
+			nR = -N.boundaryField()[patchi] + (d & gradN.boundaryField()[patchi].patchNeighbourField());
 			UR = U_.boundaryField()[patchi].patchNeighbourField();
 			gradUR = gradU.boundaryField()[patchi].patchNeighbourField();
 			const vectorField gradRho0R = gradRho0.boundaryField()[patchi].patchNeighbourField();
 			const vectorField gradRho1R = gradRho1.boundaryField()[patchi].patchNeighbourField();
 			const vectorField gradRho2R = gradRho2.boundaryField()[patchi].patchNeighbourField();
 			const vectorField gradRho3R = gradRho3.boundaryField()[patchi].patchNeighbourField();
-			rho0B = rho0 + (d & gradRho0R);
-			rho1B = rho1 + (d & gradRho1R);
-			rho2B = rho2 + (d & gradRho2R);
-			rho3B = rho3 + (d & gradRho3R);
+			//the gradient is calculated by the other cpu thus the rienmann problem was defined
+			//in opposite way
+			rho0B = rho0 + (d & gradRho3R);
+			rho1B = rho1 + (d & gradRho2R);
+			rho2B = rho2 + (d & gradRho1R);
+			rho3B = rho3 + (d & gradRho0R);
 		}else
 		{
+			nR = N.boundaryField()[patchi];
 			UR = 2*U_.boundaryField()[patchi] - UL;
 			gradUR = 2*gradU.boundaryField()[patchi] - gradU.boundaryField()[patchi].patchInternalField();
 			rho0B = rho0B_[patchi];
@@ -219,7 +225,20 @@ wasFluxScheme<Type>::calculate
 				rhoLB[3] = rho0[face]-(d[face] & gradRho0L[face]);
 			}
 
-			const double rhoRB[4] = {rho0B[face],rho1B[face],rho2B[face],rho3B[face]};
+			double rhoRB[4];
+			if((n & nR[face])>=0)
+			{
+				rhoRB[0] = rho0B[face];
+				rhoRB[1] = rho1B[face];
+				rhoRB[2] = rho2B[face];
+				rhoRB[3] = rho3B[face];
+			}else
+			{
+				rhoRB[0] = rho3B[face];
+				rhoRB[1] = rho2B[face];
+				rhoRB[2] = rho1B[face];
+				rhoRB[3] = rho0B[face];
+			}
 
 			weight(w, rhoB, speedB, rhoLB, rhoRB, d[face]);
 
