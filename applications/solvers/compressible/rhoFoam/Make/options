@@ -1,7 +1,6 @@
 EXE_INC = \
     -IBCs/lnInclude \
     -I$(HOME)/OpenFOAM/trb12187-2.1.1/src/finiteVolume/lnInclude \
-    -I$(HOME)/OpenFOAM/trb12187-2.1.1/src/reinmannSolver/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/specie/lnInclude \
     -I$(LIB_SRC)/turbulenceModels/compressible/turbulenceModel \
