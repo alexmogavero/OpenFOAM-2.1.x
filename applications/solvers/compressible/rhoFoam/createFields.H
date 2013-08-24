@@ -112,7 +112,7 @@ autoPtr<compressible::turbulenceModel> turbulence
     )
 );
 
-surfaceScalarField pAve
+/*surfaceScalarField pAve
 (
 	IOobject
 	(
@@ -180,6 +180,48 @@ surfaceScalarField TAve
 	),
 	mesh,
 	dimensionedScalar("TAve", T.dimensions(), 0.0)
+);*/
+
+surfaceScalarField rhoFlux
+(
+	IOobject
+	(
+		"rhoFlux",
+		runTime.timeName(),
+		mesh,
+		IOobject::NO_READ,
+		IOobject::NO_WRITE
+	),
+	mesh,
+	dimensionedScalar("rhoFlux", rho.dimensions()*U.dimensions()*mesh.Sf().dimensions(), 0.0)
+);
+
+surfaceScalarField EFlux
+(
+	IOobject
+	(
+		"EFlux",
+		runTime.timeName(),
+		mesh,
+		IOobject::NO_READ,
+		IOobject::NO_WRITE
+	),
+	mesh,
+	dimensionedScalar("EFlux", rhoFlux.dimensions()*e.dimensions(), 0.0)
+);
+
+surfaceVectorField UFlux
+(
+	IOobject
+	(
+		"UFlux",
+		runTime.timeName(),
+		mesh,
+		IOobject::NO_READ,
+		IOobject::NO_WRITE
+	),
+	mesh,
+	dimensionedVector("UFlux", rhoFlux.dimensions()*U.dimensions(), vector::zero)
 );
 
 
