@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "kurganovConvectionScheme.H"
+#include "centralFluxScheme.H"
 #include "fvcSurfaceIntegrate.H"
 #include "fvMatrices.H"
 #include "surfaceInterpolationScheme.H"
@@ -40,32 +40,59 @@ namespace fv
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-template<class Type>
-tmp<GeometricField<Type, fvPatchField, volMesh> >
-kurganovConvectionScheme<Type>::fvcDiv
+template <class Type>
+template <class Type1>
+tmp<GeometricField<Type1, fvsPatchField, surfaceMesh> > centralFluxScheme<Type>::interpolatePos
 (
-    const surfaceScalarField& posFaceFlux,
-    const surfaceScalarField& negFaceFlux,
-    const GeometricField<Type, fvPatchField, volMesh>& vf
+	const GeometricField<Type1, fvPatchField, volMesh>& vf
 ) const
 {
-	surfaceScalarField a_pos(ap_/(ap_ - am_));  //equation.9.b (i.e. Kurganov)
-	surfaceScalarField a_neg(1.0 - a_pos);
-	surfaceScalarField aSf(am_*a_pos);  //(-1)*equation.10.b (i.e. Kurganov)
-	surfaceScalarField aphiv_pos(a_pos*posFaceFlux - aSf);
-	surfaceScalarField aphiv_neg(a_neg*negFaceFlux + aSf);
+	is_.rewind();
+	word dummy(is_);
+	const fvMesh& mesh(this->mesh());
+	tmp<surfaceInterpolationScheme<Type1> > interpScheme(surfaceInterpolationScheme<Type1>::New(mesh, pos_, is_));
+	interpScheme().extrapolate_ = true;
 
-    tmp<GeometricField<Type, fvPatchField, volMesh> > tConvection
-    (
-        fvc::surfaceIntegrate(interpolate(aphiv_pos, aphiv_neg, vf))
-    );
+	return interpScheme().interpolate(vf);
+}
 
-    tConvection().rename
-    (
-        "convection(" + posFaceFlux.name() + ',' + negFaceFlux.name() + ',' + vf.name() + ')'
-    );
+template <class Type>
+template <class Type1>
+tmp<GeometricField<Type1, fvsPatchField, surfaceMesh> > centralFluxScheme<Type>::interpolateNeg
+(
+	const GeometricField<Type1, fvPatchField, volMesh>& vf
+) const
+{
+	is_.rewind();
+	word dummy(is_);
+	const fvMesh& mesh(this->mesh());
+	tmp<surfaceInterpolationScheme<Type1> > interpScheme(surfaceInterpolationScheme<Type1>::New(mesh, neg_, is_));
+	interpScheme().extrapolate_ = true;
 
-    return tConvection;
+	return interpScheme().interpolate(vf);
+}
+
+template<class Type>
+void centralFluxScheme<Type>::flux
+(
+	surfaceScalarField& rhoFlux,
+	surfaceVectorField& UFlux,
+	surfaceScalarField& EFlux
+)
+{
+	weight();
+
+	const volScalarField& p(thermo_.p());
+	const volScalarField& e(thermo_.e());
+	const fvMesh& mesh(this->mesh());
+
+	rhoFlux = flux(rho_);
+
+	volVectorField rhoU(rho_*U_);
+	UFlux = flux(rhoU) + interpolate(p)*mesh.Sf();
+
+	volScalarField E(rho_*(e + 0.5*magSqr(U_)) + p);
+	EFlux = flux(E) - diffusion(p);
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

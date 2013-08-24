@@ -22,22 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fv::exactRiemannSolver
+    Foam::fv::corrKurganovFluxScheme
 
 Description
     Basic second-order convection using face-gradients and Gauss' theorem.
 
 SourceFiles
-    exactRiemannSolver.C
+    corrKurganovFluxScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef exactRiemannSolver_H
-#define exactRiemannSolver_H
+#ifndef corrKurganovFluxScheme_H
+#define corrKurganovFluxScheme_H
 
-#include <cmath>
-#include "typeInfo.H"
-#include "runTimeSelectionTables.H"
+#include "kurganovFluxScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,173 +47,102 @@ namespace Foam
 namespace fv
 {
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 /*---------------------------------------------------------------------------*\
-                       Class exactRiemannSolver Declaration
+                       Class corrKurganovFluxScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class exactRiemannSolver
-
+template<class Type>
+class corrKurganovFluxScheme
+:
+    public fv::kurganovFluxScheme<Type>
 {
     // Private data
-
-		const double& pL_;
-		const double& pR_;
-		const double& rhoL_;
-		const double& rhoR_;
-		const double& uL_;
-		const double& uR_;
-		const double gamma_;
-		enum wave
-		{
-			NONE,
-			SHOCK,
-			RAREFACTION,
-			VACUUM,
-			CONTACT
-		};
-		exactRiemannSolver::wave waveL_;
-		exactRiemannSolver::wave waveC_;
-		exactRiemannSolver::wave waveR_;
-		double pStar_;
-		double uStarL_;
-		double uStarR_;
-		double rhoStarL_;
-		double rhoStarR_;
-		double speed_[5];
 
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        exactRiemannSolver(const exactRiemannSolver&);
+        corrKurganovFluxScheme(const corrKurganovFluxScheme&);
 
         //- Disallow default bitwise assignment
-        void operator=(const exactRiemannSolver&);
+        void operator=(const corrKurganovFluxScheme&);
 
-        double pStar
+        template<class Type1>
+        tmp<GeometricField<Type1, fvsPatchField, surfaceMesh> > wIntermediate
 		(
-			double
+			const surfaceScalarField&,
+			const surfaceScalarField&,
+			const GeometricField<Type1, fvsPatchField, surfaceMesh>&,
+			const GeometricField<Type1, fvsPatchField, surfaceMesh>&
 		) const;
 
-		double f
+        template<class Type1>
+		tmp<GeometricField<Type1, fvsPatchField, surfaceMesh> > correction
 		(
-			const double&,
-			const double&,
-			const double&
+			const surfaceScalarField&,
+			const surfaceScalarField&,
+			const GeometricField<Type1, fvsPatchField, surfaceMesh>&,
+			const GeometricField<Type1, fvsPatchField, surfaceMesh>&
 		) const;
 
-		double fDer
+		template<class Type1>
+		tmp<GeometricField<Type1, fvsPatchField, surfaceMesh> > fluxT
 		(
-			const double&,
-			const double&,
-			const double&
+			const GeometricField<Type1, fvPatchField, volMesh>&
 		) const;
 
-		double uStar
+		tmp<GeometricField<scalar, fvsPatchField, surfaceMesh> > flux
 		(
-			double&
+			const GeometricField<scalar, fvPatchField, volMesh>&
 		) const;
 
-		void uStar
+		tmp<GeometricField<vector, fvsPatchField, surfaceMesh> > flux
 		(
-		);
-
-		double pStarTwoRar
-		(
+			const GeometricField<vector, fvPatchField, volMesh>&
 		) const;
 
-		void setWave
+		template<class Type1>
+		tmp<GeometricField<Type1, fvsPatchField, surfaceMesh> > diffusionT
 		(
-			double&
-		);
+			const GeometricField<Type1, fvPatchField, volMesh>&
+		) const;
 
-		void rhoStar
+		tmp<GeometricField<scalar, fvsPatchField, surfaceMesh> > diffusion
 		(
-		);
+			const GeometricField<scalar, fvPatchField, volMesh>&
+		) const;
 
-		void speed
+		tmp<GeometricField<vector, fvsPatchField, surfaceMesh> > diffusion
 		(
-		);
+			const GeometricField<vector, fvPatchField, volMesh>&
+		) const;
 
-		static Foam::word waveToString
-		(
-			const exactRiemannSolver::wave&
-		);
-
-		void check
-		(
-		)const;
-
-protected:
 
 public:
 
     //- Runtime type information
-    TypeName("ExactReinmann");
+    TypeName("CorrKurganov");
+
 
     // Constructors
 
         //- Construct from flux and interpolation scheme
-        exactRiemannSolver
-        (
-        	const double& pL,
-        	const double& pR,
-        	const double& rhoL,
-        	const double& rhoR,
-        	const double& uL,
-        	const double& uR,
-        	const double gamma
-        )
-    	:
-    		pL_(pL),
-    		pR_(pR),
-    		rhoL_(rhoL),
-    		rhoR_(rhoR),
-    		uL_(uL),
-    		uR_(uR),
-    		gamma_(gamma),
-			waveL_(NONE),
-			waveC_(NONE),
-			waveR_(NONE),
-			pStar_(0.0),
-			uStarL_(0.0),
-			uStarR_(0.0),
-			rhoStarL_(0.0),
-			rhoStarR_(0.0)
+    	corrKurganovFluxScheme
+		(
+			const fvMesh& mesh,
+			const basicThermo& thermo,
+			const volVectorField& U,
+			const volScalarField& rho,
+			Istream& is
+		)
+		:
+			kurganovFluxScheme<Type>(mesh,thermo,U,rho,is)
         {}
 
-        virtual ~exactRiemannSolver() {};
-    // Public Member Functions
 
-        static void test
-        (
-        );
+    // Member Functions
 
-        double p
-		(
-			double
-		)const;
-
-        double u
-        (
-        	double
-        )const;
-
-        double rho
-        (
-        	double
-        )const;
-
-        double speed
-        (
-        	int
-        )const;
-
-        void solve
-		(
-		);
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -227,15 +154,9 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
-
-/*
 #ifdef NoRepository
-#   include "exactRiemannSolver.C"
+#   include "corrKurganovFluxScheme.C"
 #endif
-*/
-
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

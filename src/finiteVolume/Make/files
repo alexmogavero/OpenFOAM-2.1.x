@@ -343,16 +343,15 @@ convectionSchemes = finiteVolume/convectionSchemes
 $(convectionSchemes)/convectionScheme/convectionSchemes.C
 $(convectionSchemes)/gaussConvectionScheme/gaussConvectionSchemes.C
 $(convectionSchemes)/multivariateGaussConvectionScheme/multivariateGaussConvectionSchemes.C
-$(convectionSchemes)/centralConvectionSchemes/centralConvectionScheme/centralConvectionSchemes.C
-$(convectionSchemes)/centralConvectionSchemes/kurganovConvectionScheme/kurganovConvectionSchemes.C
-$(convectionSchemes)/centralConvectionSchemes/corrKurganovConvectionScheme/corrKurganovConvectionSchemes.C
 
 fluxSchemes = finiteVolume/fluxSchemes
 $(fluxSchemes)/fluxScheme/fluxSchemes.C
-$(fluxSchemes)/goudonovFluxScheme/goudonovFluxSchemes.C
-$(fluxSchemes)/wasFluxScheme/wasFluxSchemes.C
-$(fluxSchemes)/riemannSolvers/exactRiemannSolver/exactRiemannSolvers.C
-$(fluxSchemes)/riemannSolvers/exactRiemannSolver/exactRiemannSolver.C
+$(fluxSchemes)/goudonovFluxSchemes/goudonovFluxScheme/goudonovFluxSchemes.C
+$(fluxSchemes)/goudonovFluxSchemes/wasFluxScheme/wasFluxSchemes.C
+$(fluxSchemes)/goudonovFluxSchemes/riemannSolvers/exactRiemannSolver/exactRiemannSolvers.C
+$(fluxSchemes)/goudonovFluxSchemes/riemannSolvers/exactRiemannSolver/exactRiemannSolver.C
+$(fluxSchemes)/centralFluxSchemes/kurganovFluxScheme/kurganovFluxSchemes.C
+$(fluxSchemes)/centralFluxSchemes/corrKurganovFluxScheme/corrKurganovFluxSchemes.C
 
 laplacianSchemes = finiteVolume/laplacianSchemes
 $(laplacianSchemes)/laplacianScheme/laplacianSchemes.C

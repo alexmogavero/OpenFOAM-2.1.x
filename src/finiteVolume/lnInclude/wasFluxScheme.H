@@ -47,7 +47,8 @@ SourceFiles
 #include "NVDTVD.H"
 #include "NVDVTVDV.H"
 #include "fvcGrad.H"
-#include "fluxScheme.H"
+//#include "fluxScheme.H"
+#include "goudonovFluxScheme.H"
 #include "wallFvPatch.H"
 #include "symmetryFvPatch.H"
 #include "wedgeFvPatch.H"
@@ -72,17 +73,17 @@ namespace fv
 template<class Type>
 class wasFluxScheme
 :
-		public fv::fluxScheme<Type>
+		public fv::goudonovFluxScheme<Type>
 {
     // Private data
-		const basicThermo& thermo_;
-		const volScalarField& p_;
+		//const basicThermo& thermo_;
+		//const volScalarField& p_;
 		volScalarField::GeometricBoundaryField pB_;
 		volScalarField::GeometricBoundaryField pBB_;
-		const volVectorField& U_;
+		//const volVectorField& U_;
 		volVectorField::GeometricBoundaryField UB_;
 		volVectorField::GeometricBoundaryField UBB_;
-		const volScalarField& rho_;
+		//const volScalarField& rho_;
 		volScalarField::GeometricBoundaryField rhoB_;
 		volScalarField::GeometricBoundaryField rhoBB_;
 		surfaceScalarField p0_;
@@ -218,17 +219,18 @@ public:
 			Istream& schemeData
 		)
 		:
-			fluxScheme<Type>(mesh),
-			thermo_(thermo),
-			p_(thermo.p()),
-			pB_(p_.boundaryField()),
-			pBB_(p_.boundaryField()),
-			U_(U),
-			UB_(U_.boundaryField()),
-			UBB_(U_.boundaryField()),
-			rho_(rho),
-			rhoB_(rho_.boundaryField()),
-			rhoBB_(rho_.boundaryField()),
+			goudonovFluxScheme<Type>(mesh,thermo,U,rho,schemeData),
+			//fluxScheme<Type>(mesh),
+			//thermo_(thermo),
+			//p_(thermo.p()),
+			pB_(this->p_.boundaryField()),
+			pBB_(this->p_.boundaryField()),
+			//U_(U),
+			UB_(this->U_.boundaryField()),
+			UBB_(this->U_.boundaryField()),
+			//rho_(rho),
+			rhoB_(this->rho_.boundaryField()),
+			rhoBB_(this->rho_.boundaryField()),
 			p0_
 			(
 				IOobject
@@ -238,7 +240,7 @@ public:
 					mesh
 				),
 				mesh,
-				dimensionedScalar("p1", p_.dimensions(), 0.0)
+				dimensionedScalar("p1", this->p_.dimensions(), 0.0)
 			),
 			p0B_(p0_.boundaryField()),
 			p1_(p0_),
@@ -256,7 +258,7 @@ public:
 					mesh
 				),
 				mesh,
-				dimensionedScalar("rho1", rho_.dimensions(), 0.0)
+				dimensionedScalar("rho1", this->rho_.dimensions(), 0.0)
 			),
 			rho0B_(rho0_.boundaryField()),
 			rho1_(rho0_),
@@ -274,7 +276,7 @@ public:
 					mesh
 				),
 				mesh,
-				dimensionedScalar("u1", U_.dimensions(), 0.0)
+				dimensionedScalar("u1", this->U_.dimensions(), 0.0)
 			),
 			u0B_(u0_.boundaryField()),
 			u1_(u0_),

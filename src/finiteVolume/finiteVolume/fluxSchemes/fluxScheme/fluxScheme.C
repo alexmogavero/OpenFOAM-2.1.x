@@ -126,7 +126,6 @@ void fluxScheme<Type>::operator=(const fluxScheme<Type>& cs)
     }
 }
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace fv

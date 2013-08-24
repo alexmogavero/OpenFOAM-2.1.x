@@ -125,6 +125,77 @@ goudonovFluxScheme<Type>::calculate
 }
 
 template<class Type>
+void goudonovFluxScheme<Type>::flux
+(
+	surfaceScalarField& rhoFlux,
+	surfaceVectorField& UFlux,
+	surfaceScalarField& EFlux
+)
+{
+	const fvMesh& mesh(this->mesh());
+	surfaceScalarField pAve
+	(
+		IOobject
+		(
+			"pAve",
+			mesh.time().timeName(),
+			mesh
+		),
+		mesh,
+		dimensionedScalar("pAve", p_.dimensions(), 0.0)
+	);
+	surfaceScalarField rhoAve
+	(
+		IOobject
+		(
+			"rhoAve",
+			mesh.time().timeName(),
+			mesh
+		),
+		mesh,
+		dimensionedScalar("rhoAve", rho_.dimensions(), 0.0)
+	);
+	surfaceVectorField UAve
+	(
+		IOobject
+		(
+			"UAve",
+			mesh.time().timeName(),
+			mesh
+		),
+		mesh,
+		dimensionedVector("UAve", U_.dimensions(), vector::zero)
+	);
+
+	calculate(pAve,rhoAve,UAve);
+
+	rhoFlux = rhoAve*(UAve & mesh.Sf());
+
+	UFlux = rhoFlux*UAve + pAve*mesh.Sf();
+
+	surfaceScalarField R(fvc::interpolate(thermo_.Cp() - thermo_.Cv()));
+	surfaceScalarField TAve(pAve/(R*rhoAve));
+	const labelList& own = mesh.faceOwner();
+	surfaceScalarField eAve
+	(
+		IOobject
+		(
+			"eAve",
+			mesh.time().timeName(),
+			mesh
+		),
+		mesh,
+		dimensionedScalar("eAve", R.dimensions()*TAve.dimensions(), 0.0)
+	);
+	eAve.internalField() = thermo_.e(TAve.internalField(),own);
+	forAll(TAve.boundaryField(),patchi)
+	{
+		eAve.boundaryField()[patchi] = thermo_.e(TAve.boundaryField()[patchi],patchi);
+	}
+	EFlux = (UAve & mesh.Sf())*(eAve*rhoAve + 0.5*rhoAve*magSqr(UAve) + pAve);
+}
+
+template<class Type>
 goudonovFluxScheme<Type>::~goudonovFluxScheme()
 {}
 

@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "kurganovConvectionScheme.H"
+#include "corrKurganovFluxScheme.H"
 #include "fvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -32,7 +32,7 @@ namespace Foam
 {
 namespace fv
 {
-    makeFvConvectionScheme(kurganovConvectionScheme)
+    makeFvFluxScheme(corrKurganovFluxScheme)
 }
 }
 

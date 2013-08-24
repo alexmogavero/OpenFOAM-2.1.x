@@ -66,13 +66,6 @@ class goudonovFluxScheme
 :
 		public fv::fluxScheme<Type> //refCount
 {
-    // Private data
-		const basicThermo& thermo_;
-		const volScalarField& p_;
-		const volVectorField& U_;
-		const volScalarField& rho_;
-
-
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
@@ -82,6 +75,19 @@ class goudonovFluxScheme
         void operator=(const goudonovFluxScheme&);
 
 protected:
+        // Protected data
+		const basicThermo& thermo_;
+		const volScalarField& p_;
+		const volVectorField& U_;
+		const volScalarField& rho_;
+
+		//Protected Member Functions
+		virtual void calculate
+		(
+			surfaceScalarField&,
+			surfaceScalarField&,
+			surfaceVectorField&
+		);
 
 public:
 
@@ -110,11 +116,11 @@ public:
 
     // Public Member Functions
 
-        void calculate
+        void flux
 		(
-			surfaceScalarField&,
-			surfaceScalarField&,
-			surfaceVectorField&
+			surfaceScalarField& rhoFlux,
+			surfaceVectorField& UFlux,
+			surfaceScalarField& EFlux
 		);
 };
 

@@ -46,13 +46,13 @@ wasFluxScheme<Type>::calculate
 	surfaceVectorField& UAve
 )
 {
-	const volVectorField gradP(fvc::grad(p_));
-	const volTensorField gradU(fvc::grad(U_));
-	const volVectorField gradRho(fvc::grad(rho_));
+	const volVectorField gradP(fvc::grad(this->p_));
+	const volTensorField gradU(fvc::grad(this->U_));
+	const volVectorField gradRho(fvc::grad(this->rho_));
 	setBoundary(gradP,gradU,gradRho);
 	riemann();
 
-	const fvMesh& mesh = p_.mesh();
+	const fvMesh& mesh = this->p_.mesh();
 	const labelUList& owner = mesh.owner();
 	const labelUList& neighbour = mesh.neighbour();
 	const volVectorField& C = mesh.C();
@@ -69,10 +69,10 @@ wasFluxScheme<Type>::calculate
 		label nei = neighbour[face];
 		const vector d = C[nei] - C[own];
 		const vector n = mesh.Sf()[face]/mesh.magSf()[face];
-		const double uL = U_[own] & n;
-		const double uR = U_[nei] & n;
-		const vector vL = U_[own] - uL*n;
-		const vector vR = U_[nei] - uR*n;
+		const double uL = this->U_[own] & n;
+		const double uR = this->U_[nei] & n;
+		const vector vL = this->U_[own] - uL*n;
+		const vector vR = this->U_[nei] - uR*n;
 		const tensor gradVL = gradU[own] - (gradU[own] & n)*n;
 		const tensor gradVR = gradU[nei] - (gradU[nei] & n)*n;
 
@@ -153,7 +153,7 @@ wasFluxScheme<Type>::calculate
 		const scalarField speed1 = speed1_.boundaryField()[patchi];
 		const scalarField speed2 = speed2_.boundaryField()[patchi];
 
-		const vectorField UL = U_.boundaryField()[patchi].patchInternalField();
+		const vectorField UL = this->U_.boundaryField()[patchi].patchInternalField();
 		const tensorField gradUL = gradU.boundaryField()[patchi].patchInternalField();
 		const vectorField gradRho0L = gradRho0.boundaryField()[patchi].patchInternalField();
 		const vectorField gradRho1L = gradRho1.boundaryField()[patchi].patchInternalField();
@@ -163,6 +163,7 @@ wasFluxScheme<Type>::calculate
 		const vectorField d = 2*mesh.boundary()[patchi].delta();
 		const vectorField nL = N.boundaryField()[patchi] - (d & gradN.boundaryField()[patchi].patchInternalField());
 
+		vectorField nR;
 		vectorField UR;
 		tensorField gradUR;
 		scalarField rho0B;
@@ -171,19 +172,24 @@ wasFluxScheme<Type>::calculate
 		scalarField rho3B;
 		if (bP[patchi].coupled())
 		{
-			UR = U_.boundaryField()[patchi].patchNeighbourField();
+			// the gradient is calculated by the other cpu thus with opposite boundary normal
+			nR = -N.boundaryField()[patchi] + (d & gradN.boundaryField()[patchi].patchNeighbourField());
+			UR = this->U_.boundaryField()[patchi].patchNeighbourField();
 			gradUR = gradU.boundaryField()[patchi].patchNeighbourField();
 			const vectorField gradRho0R = gradRho0.boundaryField()[patchi].patchNeighbourField();
 			const vectorField gradRho1R = gradRho1.boundaryField()[patchi].patchNeighbourField();
 			const vectorField gradRho2R = gradRho2.boundaryField()[patchi].patchNeighbourField();
 			const vectorField gradRho3R = gradRho3.boundaryField()[patchi].patchNeighbourField();
-			rho0B = rho0 + (d & gradRho0R);
-			rho1B = rho1 + (d & gradRho1R);
-			rho2B = rho2 + (d & gradRho2R);
-			rho3B = rho3 + (d & gradRho3R);
+			//the gradient is calculated by the other cpu thus the rienmann problem was defined
+			//in opposite way
+			rho0B = rho0 + (d & gradRho3R);
+			rho1B = rho1 + (d & gradRho2R);
+			rho2B = rho2 + (d & gradRho1R);
+			rho3B = rho3 + (d & gradRho0R);
 		}else
 		{
-			UR = 2*U_.boundaryField()[patchi] - UL;
+			nR = N.boundaryField()[patchi];
+			UR = 2*this->U_.boundaryField()[patchi] - UL;
 			gradUR = 2*gradU.boundaryField()[patchi] - gradU.boundaryField()[patchi].patchInternalField();
 			rho0B = rho0B_[patchi];
 			rho1B = rho1B_[patchi];
@@ -219,7 +225,20 @@ wasFluxScheme<Type>::calculate
 				rhoLB[3] = rho0[face]-(d[face] & gradRho0L[face]);
 			}
 
-			const double rhoRB[4] = {rho0B[face],rho1B[face],rho2B[face],rho3B[face]};
+			double rhoRB[4];
+			if((n & nR[face])>=0)
+			{
+				rhoRB[0] = rho0B[face];
+				rhoRB[1] = rho1B[face];
+				rhoRB[2] = rho2B[face];
+				rhoRB[3] = rho3B[face];
+			}else
+			{
+				rhoRB[0] = rho3B[face];
+				rhoRB[1] = rho2B[face];
+				rhoRB[2] = rho1B[face];
+				rhoRB[3] = rho0B[face];
+			}
 
 			weight(w, rhoB, speedB, rhoLB, rhoRB, d[face]);
 
@@ -257,11 +276,11 @@ wasFluxScheme<Type>::riemann
 (
 )
 {
-	const fvMesh& mesh = p_.mesh();
+	const fvMesh& mesh = this->p_.mesh();
 	const labelUList& owner = mesh.owner();
 	const labelUList& neighbour = mesh.neighbour();
-	const tmp<volScalarField> Cp = thermo_.Cp();
-	const tmp<volScalarField> Cv = thermo_.Cv();
+	const tmp<volScalarField> Cp = this->thermo_.Cp();
+	const tmp<volScalarField> Cv = this->thermo_.Cv();
 	const surfaceScalarField gamma(fvc::interpolate(Cp()/Cv()));
 
 	forAll(p1_,face)
@@ -270,15 +289,15 @@ wasFluxScheme<Type>::riemann
 		label nei = neighbour[face];
 
 		const vector n = mesh.Sf()[face]/mesh.magSf()[face];
-		const double uL = U_[own] & n;
-		const double uR = U_[nei] & n;
+		const double uL = this->U_[own] & n;
+		const double uR = this->U_[nei] & n;
 
-		if(p_[nei]<=0)
+		/*if(p_[nei]<=0)
 		{
 			Info << face << " " << own << " " << nei << endl;
-			Info << p_[nei] << endl;
-		}
-		exactRiemannSolver riemann(p_[own],p_[nei],rho_[own],rho_[nei],uL,uR,gamma[face]);
+			Info << this->p_[nei] << endl;
+		}*/
+		exactRiemannSolver riemann(this->p_[own],this->p_[nei],this->rho_[own],this->rho_[nei],uL,uR,gamma[face]);
 		riemann.solve();
 
 		speed0_[face] = riemann.speed(0);
@@ -317,9 +336,9 @@ wasFluxScheme<Type>::riemann
 	const surfaceScalarField::GeometricBoundaryField& bP = p1_.boundaryField();
 	forAll(bP, patchi)
 	{
-		const scalarField pL = p_.boundaryField()[patchi].patchInternalField();
-		const scalarField rhoL = rho_.boundaryField()[patchi].patchInternalField();
-		const vectorField UL = U_.boundaryField()[patchi].patchInternalField();
+		const scalarField pL = this->p_.boundaryField()[patchi].patchInternalField();
+		const scalarField rhoL = this->rho_.boundaryField()[patchi].patchInternalField();
+		const vectorField UL = this->U_.boundaryField()[patchi].patchInternalField();
 		scalarField pR;
 		scalarField pRR;
 		scalarField rhoR;
@@ -328,9 +347,9 @@ wasFluxScheme<Type>::riemann
 		vectorField URR;
 		if (bP[patchi].coupled())
 		{
-			pR = p_.boundaryField()[patchi].patchNeighbourField();
-			rhoR = rho_.boundaryField()[patchi].patchNeighbourField();
-			UR = U_.boundaryField()[patchi].patchNeighbourField();
+			pR = this->p_.boundaryField()[patchi].patchNeighbourField();
+			rhoR = this->rho_.boundaryField()[patchi].patchNeighbourField();
+			UR = this->U_.boundaryField()[patchi].patchNeighbourField();
 		}else
 		{
 			pR = pB_[patchi];
@@ -463,7 +482,7 @@ wasFluxScheme<Type>::setBoundary
 	const volVectorField& gradRho
 )
 {
-	const fvMesh& mesh = p_.mesh();
+	const fvMesh& mesh = this->p_.mesh();
 
 	forAll(pB_, patchi)
 	{
@@ -479,38 +498,38 @@ wasFluxScheme<Type>::setBoundary
 		if (isA<wallFvPatch>(mesh.boundary()[patchi]) || isA<symmetryFvPatch>(mesh.boundary()[patchi]))
 		{
 			//reflective conditions
-			pB = p_.boundaryField()[patchi].patchInternalField();
-			pBB = 2*p_.boundaryField()[patchi] - p_.boundaryField()[patchi].patchInternalField()
+			pB = this->p_.boundaryField()[patchi].patchInternalField();
+			pBB = 2*this->p_.boundaryField()[patchi] - this->p_.boundaryField()[patchi].patchInternalField()
 					-2*(gradP.boundaryField()[patchi].patchInternalField() & d);
-			rhoB = rho_.boundaryField()[patchi].patchInternalField();
-			rhoBB = 2*rho_.boundaryField()[patchi] - rho_.boundaryField()[patchi].patchInternalField()
+			rhoB = this->rho_.boundaryField()[patchi].patchInternalField();
+			rhoBB = 2*this->rho_.boundaryField()[patchi] - this->rho_.boundaryField()[patchi].patchInternalField()
 					-2*(gradRho.boundaryField()[patchi].patchInternalField() & d);
-			UB = 2*U_.boundaryField()[patchi] - U_.boundaryField()[patchi].patchInternalField();
-			UBB = 2*U_.boundaryField()[patchi] - UB + 2*(d & gradU.boundaryField()[patchi].patchInternalField());
+			UB = 2*this->U_.boundaryField()[patchi] - this->U_.boundaryField()[patchi].patchInternalField();
+			UBB = 2*this->U_.boundaryField()[patchi] - UB + 2*(d & gradU.boundaryField()[patchi].patchInternalField());
 
-			pBB = max(pBB,0.01*min(p_).value());
-			rhoBB = max(rhoBB,0.01*min(rho_).value());
+			pBB = max(pBB,0.01*min(this->p_).value());
+			rhoBB = max(rhoBB,0.01*min(this->rho_).value());
 		}else if(isA<wedgeFvPatch>(mesh.boundary()[patchi]))
 		{
 			//reflective conditions for 2D axial-symmetric mesh
-			pB = p_.boundaryField()[patchi].patchInternalField();
-			pBB = p_.boundaryField()[patchi].patchInternalField();
-			rhoB = rho_.boundaryField()[patchi].patchInternalField();
-			rhoBB = rho_.boundaryField()[patchi].patchInternalField();
-			UB = 2*U_.boundaryField()[patchi] - U_.boundaryField()[patchi].patchInternalField();
-			UBB = 2*U_.boundaryField()[patchi] - UB + 2*(d & gradU.boundaryField()[patchi].patchInternalField());
+			pB = this->p_.boundaryField()[patchi].patchInternalField();
+			pBB = this->p_.boundaryField()[patchi].patchInternalField();
+			rhoB = this->rho_.boundaryField()[patchi].patchInternalField();
+			rhoBB = this->rho_.boundaryField()[patchi].patchInternalField();
+			UB = 2*this->U_.boundaryField()[patchi] - this->U_.boundaryField()[patchi].patchInternalField();
+			UBB = 2*this->U_.boundaryField()[patchi] - UB + 2*(d & gradU.boundaryField()[patchi].patchInternalField());
 
-			pBB = max(pBB,0.01*min(p_).value());
-			rhoBB = max(rhoBB,0.01*min(rho_).value());
+			pBB = max(pBB,0.01*min(this->p_).value());
+			rhoBB = max(rhoBB,0.01*min(this->rho_).value());
 		}else
 		{
 			//fixed conditions
-			pB = p_.boundaryField()[patchi];
-			pBB = p_.boundaryField()[patchi];
-			rhoB = rho_.boundaryField()[patchi];
-			rhoBB = rho_.boundaryField()[patchi];
-			UB = U_.boundaryField()[patchi];
-			UBB = U_.boundaryField()[patchi];
+			pB = this->p_.boundaryField()[patchi];
+			pBB = this->p_.boundaryField()[patchi];
+			rhoB = this->rho_.boundaryField()[patchi];
+			rhoBB = this->rho_.boundaryField()[patchi];
+			UB = this->U_.boundaryField()[patchi];
+			UBB = this->U_.boundaryField()[patchi];
 		}
 	}
 }
@@ -582,7 +601,7 @@ wasFluxScheme<Type>::averageV
 {
 	scalar cfl;
 	NVDVTVDV tvd;
-	const double dT = p_.mesh().time().deltaTValue();
+	const double dT = this->p_.mesh().time().deltaTValue();
 
 	cfl = speed*dT/mag(d);
 	double r = tvd.r
@@ -612,7 +631,7 @@ wasFluxScheme<Type>::weight
 )const
 {
 	double cfl;
-	const double dT = p_.mesh().time().deltaTValue();
+	const double dT = this->p_.mesh().time().deltaTValue();
 
 	for (int i=0; i<3; i++)
 	{

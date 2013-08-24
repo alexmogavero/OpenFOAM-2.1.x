@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "centralConvectionScheme.H"
+#include "centralFluxScheme.H"
 #include "fvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -32,7 +32,7 @@ namespace Foam
 {
 namespace fv
 {
-    makeFvConvectionScheme(centralConvectionScheme)
+    makeFvFluxScheme(centralFluxScheme)
 }
 }
 

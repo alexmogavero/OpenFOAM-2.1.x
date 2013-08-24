@@ -136,30 +136,12 @@ public:
         }
 
         virtual void
-        calculate
+		flux
 		(
-			surfaceScalarField&,
-			surfaceScalarField&,
-			surfaceVectorField&
-		) = 0;
-
-        /*virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh> > flux
-        (
-            const surfaceScalarField&,
-            const GeometricField<Type, fvPatchField, volMesh>&
-        ) const = 0;*/
-
-        /*virtual tmp<fvMatrix<Type> > fvmDiv
-        (
-            const surfaceScalarField&,
-            const GeometricField<Type, fvPatchField, volMesh>&
-        ) const = 0;
-
-        virtual tmp<GeometricField<Type, fvPatchField, volMesh> > fvcDiv
-        (
-            const surfaceScalarField&,
-            const GeometricField<Type, fvPatchField, volMesh>&
-        ) const = 0;*/
+			surfaceScalarField& rhoFlux,
+			surfaceVectorField& UFlux,
+			surfaceScalarField& EFlux
+		)=0;
 
 
     // Member operators
