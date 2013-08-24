@@ -41,12 +41,8 @@ Description
 #include "surfaceInterpolation.H"
 #include "LimitedScheme.H"
 #include "Minmod.H"
-#include "kurganovConvectionScheme.H"
 
-//#include "fluxScheme.H"
-//#include "exactReinmannSolver.H"
-#include "wasFluxScheme.H"
-#include "goudonovFluxScheme.H"
+#include "fluxScheme.H"
 #include "ePsiThermo.H"
 #include "specie.H"
 
@@ -73,7 +69,7 @@ int main(int argc, char *argv[])
     while (runTime.run())
     {
     	const float t0 = runTime.elapsedCpuTime();
-    	Info << runTime.cpuTimeIncrement() << endl;
+    	Info << "start:" << runTime.cpuTimeIncrement() << endl;
 
     	//store previous iterations for relaxation
     	rho.storePrevIter();
@@ -97,26 +93,9 @@ int main(int argc, char *argv[])
         Info << runTime.cpuTimeIncrement() << endl;
         tmp<fv::fluxScheme<scalar> > flux = fv::fluxScheme<scalar>::New(mesh,thermo,U,rho,mesh.divScheme("flux"));
         Info << "1-- " << runTime.cpuTimeIncrement() << endl;
-        flux().calculate(pAve,rhoAve,UAve);
+        //flux().calculate(pAve,rhoAve,UAve);
+        flux().flux(rhoFlux,UFlux,EFlux);
         Info << "2-- " << runTime.cpuTimeIncrement() << endl;
-
-        surfaceScalarField rhoFlux(rhoAve*(UAve & mesh.Sf()));
-        surfaceVectorField UFlux(rhoFlux*UAve + pAve*mesh.Sf());
-        surfaceScalarField R(fvc::interpolate(thermo.Cp() - thermo.Cv()));
-        TAve = pAve/(R*rhoAve);
-        const labelList& own = mesh.faceOwner();
-        //surfaceScalarField eAve(fvc::interpolate(e));
-        eAve.internalField() = thermo.e(TAve.internalField(),own);
-        forAll(TAve.boundaryField(),patchi)
-        {
-        	eAve.boundaryField()[patchi] = thermo.e(TAve.boundaryField()[patchi],patchi);
-        }
-//        dimensionedScalar e0("e0",e.dimensions(),thermo.e(0*T,1)()[0]);
-//        surfaceScalarField EFlux((UAve & mesh.Sf())*(e0*rhoAve + pAve/(1.4-1) + 0.5*rhoAve*magSqr(UAve) + pAve));
-        surfaceScalarField EFlux((UAve & mesh.Sf())*(eAve*rhoAve + 0.5*rhoAve*magSqr(UAve) + pAve));
-        Info << runTime.cpuTimeIncrement() << endl;
-
-		#include "cellDebug.H"
         Info << runTime.cpuTimeIncrement() << endl;
 
         volScalarField muEff(turbulence->muEff());
@@ -124,11 +103,9 @@ int main(int argc, char *argv[])
 
         // --- Solve density
         solve(fvm::ddt(rho) + fvc::div(rhoFlux));
-        //rho.relax();
 
         // --- Solve momentum
         solve(fvm::ddt(rhoU) + fvc::div(UFlux));
-        //rhoU.relax();
 
         U.dimensionedInternalField() =
             rhoU.dimensionedInternalField()
@@ -174,7 +151,7 @@ int main(int argc, char *argv[])
                 	fvc::interpolate(muEff)*mesh.magSf()*fvc::snGrad(U)
               	  + (mesh.Sf() & fvc::interpolate(tauMC))
             		)
-            		& UAve; //(a_pos*U_pos + a_neg*U_neg);
+            		& fvc::interpolate(U); //UAve; //(a_pos*U_pos + a_neg*U_neg); TODO verify if this might be a problem for stability
 
         solve
 		(
@@ -182,14 +159,10 @@ int main(int argc, char *argv[])
 			+ fvc::div(EFlux)
 			- fvc::div(sigmaDotU)
 		);
-        //rhoE.relax();
 
         e = rhoE/rho - 0.5*magSqr(U);
         e.correctBoundaryConditions();
 
-        //TODO limit the energy starting from the min and max Temperature
-//        double emax;
-//		double emin;
 		bool eLimited = false;
 		scalarField Tmin(1);
 		scalarField Tmax(1);
@@ -282,12 +255,6 @@ int main(int argc, char *argv[])
             << "   Time/iter = " << runTime.elapsedCpuTime() - t0 << " s"
             << " iteration = " << runTime.timeIndex() << " "
             << nl << endl;
-
-        /*if(runTime.timeIndex()==616644)
-        {
-        	Info << "writing..." << endl;
-        	runTime.writeNow();
-        }*/
     }
 
     Info<< "End\n" << endl;
