@@ -212,6 +212,18 @@ int main(int argc, char *argv[])
             );
             eEquation.relax();
 			solve(eEquation);
+			if(min(e).value()<emin)
+			{
+				Info << "e limited to " << emin << " it was " << min(e).value() << endl;
+				e.max(emin);
+				eLimited = true;
+			}
+			if(max(e).value()>emax)
+			{
+				Info << "e limited to " << emax << " it was " << max(e).value() << endl;
+				e.min(emax);
+				eLimited = true;
+			}
             thermo.correct();
 
             if(min(rho).value()<rhomin)
