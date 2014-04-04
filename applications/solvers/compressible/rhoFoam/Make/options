@@ -1,17 +1,16 @@
 EXE_INC = \
     -IBCs/lnInclude \
-    -I$(HOME)/OpenFOAM/trb12187-2.1.1/src/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/specie/lnInclude \
     -I$(LIB_SRC)/turbulenceModels/compressible/turbulenceModel \
     -I$(LIB_SRC)/dynamicMesh/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
-    -DFULLDEBUG -g -O0
 
 EXE_LIBS = \
-    -L$(FOAM_USER_LIBBIN)/finiteVolume \
+    -L$(FOAM_LIBBIN)/finiteVolume \
     -lbasicThermophysicalModels \
-    -L$(FOAM_USER_LIBBIN)/thermophysicalModels/specie \
+    -L$(FOAM_LIBBIN)/thermophysicalModels/specie \
     -lrhoCentralFoam \
     -lcompressibleTurbulenceModel \
     -lcompressibleRASModels \
