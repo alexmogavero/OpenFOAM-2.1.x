@@ -1,0 +1,3 @@
+oneDim.C
+
+EXE = $(FOAM_APPBIN)/oneDim
