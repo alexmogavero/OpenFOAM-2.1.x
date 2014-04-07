@@ -1,0 +1,4 @@
+cellDebug.C
+cellDebugFunctionObject.C
+
+LIB = $(FOAM_LIBBIN)/libcellDebug
