@@ -119,137 +119,19 @@ void Foam::calc(const argList& args, const Time& runTime, const fvMesh& mesh)
     	}
     }
 
-    forAll(X1dim,i){
-    	Info << X1dim[i] << " " << p1dim[i] << " " << T1dim[i] << " " << U1dim[i] <<  endl;
+    if(writeResults){
+    	Info << "Writing output to file" << endl;
+
+    	OFstream outFile("oneDim.dat");
+    	outFile << "X p T U_x" << endl;
+    	forAll(X1dim,i){
+    		outFile << X1dim[i] << " " << p1dim[i] << " " << T1dim[i] << " " << U1dim[i] <<  endl;
+    	}
+    }else{
+    	forAll(X1dim,i){
+    		Info << X1dim[i] << " " << p1dim[i] << " " << T1dim[i] << " " << U1dim[i] <<  endl;
+    	}
     }
-
-
-    // Check U and T exists
-    //if (Uheader.headerOk() && Theader.headerOk())
-    //{
-        /*autoPtr<volScalarField> Cp;
-        autoPtr<volScalarField> alpha;
-        autoPtr<volScalarField> e;
-        autoPtr<volScalarField> Cv;
-        autoPtr<volScalarField> k;
-
-        IOdictionary thermophysicalProperties
-        (
-            IOobject
-            (
-                "thermophysicalProperties",
-                runTime.constant(),
-                mesh,
-                IOobject::MUST_READ_IF_MODIFIED,
-                IOobject::NO_WRITE
-            )
-        );
-
-        dimensionedScalar Pr
-        (
-            "Pr",
-            dimless,
-            thermophysicalProperties.subDict("mixture").subDict("transport")
-           .lookup("Pr")
-        );
-
-        //volVectorField U(Uheader, mesh);
-
-        if
-        (
-            IOobject
-            (
-                "thermophysicalProperties",
-                runTime.constant(),
-                mesh
-            ).headerOk()
-        )
-        {
-            autoPtr<basicThermo> thermo
-            (
-                basicThermo::New(mesh)
-            );
-
-            Cp.set
-            (
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        "Cp",
-                        runTime.timeName(),
-                        mesh
-                    ),
-                    thermo->Cp()
-                )
-            );
-            alpha.set
-			(
-				new volScalarField
-				(
-					IOobject
-					(
-						"alpha",
-						runTime.timeName(),
-						mesh
-					),
-					thermo->alpha()
-				)
-			);
-            e.set
-			(
-				new volScalarField
-				(
-					IOobject
-					(
-						"e",
-						runTime.timeName(),
-						mesh
-					),
-					thermo->e()
-				)
-			);
-            Cv.set
-			(
-				new volScalarField
-				(
-					IOobject
-					(
-						"Cv",
-						runTime.timeName(),
-						mesh
-					),
-					thermo->Cv()
-				)
-			);
-            k.set
-			(
-				new volScalarField
-				(
-					IOobject
-					(
-						"k",
-						runTime.timeName(),
-						mesh
-					),
-					thermo->Cp()*thermo->mu()/Pr
-				)
-			);
-        }
-
-        if (writeResults)
-        {
-            Cp().write();
-            alpha().write();
-            e().write();
-            Cv().write();
-            k().write();
-        }
-    /*}
-    else
-    {
-        Info<< "    Missing U or T" << endl;
-    }*/
 
     Info<< "\nEnd\n" << endl;
 }
