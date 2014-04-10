@@ -60,8 +60,6 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    //#include "readFluxScheme.H"
-
     dimensionedScalar v_zero("v_zero", dimVolume/dimTime, 0.0);
 
     Info<< "\nStarting time loop\n" << endl;
@@ -79,7 +77,7 @@ int main(int argc, char *argv[])
     	volScalarField c(sqrt(thermo.Cp()/(thermo.Cv()*psi)));
     	surfaceScalarField phiv(fvc::interpolate(U) & mesh.Sf());
     	surfaceScalarField cSf(fvc::interpolate(c)*mesh.magSf());
-    	surfaceScalarField amaxSf(max(mag(phiv + cSf),mag(phiv - cSf)));
+    	surfaceScalarField amaxSf("amaxSf",max(mag(phiv + cSf),mag(phiv - cSf)));
 
         #include "compressibleCourantNo.H"
         #include "readTimeControls.H"
