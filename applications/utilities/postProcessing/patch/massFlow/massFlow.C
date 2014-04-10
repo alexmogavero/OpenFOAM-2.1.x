@@ -114,27 +114,33 @@ void Foam::calc(const argList& args, const Time& runTime, const fvMesh& mesh)
         	mfrAve = (mesh.Sf() & UAve)*rhoAve;
         }
 
+        scalar mfrTot = 0;
+        scalar mfrAveTot = 0;
+
         Info<< "\nMass Flow rate [kg/s]" << endl;
         forAll(mfr.boundaryField(),patchi)
         {
-        	Info<< mesh.boundary()[patchi].name()
-				<< " "
-				<< gSum
-				   (
-					   mfr.boundaryField()[patchi]
-				   );
+        	scalar mfrPatch = gSum(mfr.boundaryField()[patchi]);
+        	mfrTot = mfrTot + mfrPatch;
+        	Info<< mesh.boundary()[patchi].name() << " " << mfrPatch;
 
         	if (UAveHeader.headerOk() && rhoAveHeader.headerOk())
         	{
-        		Info<< " "
-					<< gSum
-					   (
-						   mfrAve.boundaryField()[patchi]
-					   );
+        		scalar mfrAvePatch = gSum(mfrAve.boundaryField()[patchi]);
+        		mfrAveTot = mfrAveTot + mfrAvePatch;
+        		Info << " " << mfrAvePatch;
         	}
 
-			Info<< endl;
+			Info << endl;
         }
+
+        Info << "-----------------------------------------------" << endl;
+        Info << "TOT " << mfrTot;
+        if (UAveHeader.headerOk() && rhoAveHeader.headerOk())
+        {
+        	Info << " " << mfrAveTot;
+        }
+        Info << endl;
 
         if (writeResults)
         {
