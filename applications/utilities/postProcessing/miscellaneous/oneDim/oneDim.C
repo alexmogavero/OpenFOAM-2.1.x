@@ -122,7 +122,7 @@ void Foam::calc(const argList& args, const Time& runTime, const fvMesh& mesh)
     if(writeResults){
     	Info << "Writing output to file" << endl;
 
-    	OFstream outFile("oneDim.dat");
+    	OFstream outFile(mesh.time().path()/mesh.time().timeName()/"oneDim.dat");
     	outFile << "X p T U_x" << endl;
     	forAll(X1dim,i){
     		outFile << X1dim[i] << " " << p1dim[i] << " " << T1dim[i] << " " << U1dim[i] <<  endl;
