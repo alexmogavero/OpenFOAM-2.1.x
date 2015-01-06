@@ -43,31 +43,44 @@ void Foam::calc(const argList& args, const Time& runTime, const fvMesh& mesh)
 
     IOobject Uheader
     (
-        "U",
-        runTime.timeName(),
-        mesh,
-        IOobject::MUST_READ
+    		"U",
+    		runTime.timeName(),
+    		mesh,
+    		IOobject::MUST_READ
     );
 
     IOobject Theader
     (
-        "T",
-        runTime.timeName(),
-        mesh,
-        IOobject::MUST_READ
+    		"T",
+    		runTime.timeName(),
+    		mesh,
+    		IOobject::MUST_READ
     );
 
     IOobject pheader
     (
-    	"p",
-    	runTime.timeName(),
-    	mesh,
-    	IOobject::MUST_READ
+    		"p",
+    		runTime.timeName(),
+    		mesh,
+    		IOobject::MUST_READ
     );
+
+    IOobject Mheader
+    (
+    		"Ma",
+    		runTime.timeName(),
+    		mesh,
+    		IOobject::MUST_READ
+    );
+
+    if (~Mheader.headerOk()){
+    	Foam::error("Field Ma does not exist.");
+    }
 
     volScalarField T(Theader,mesh);
     volScalarField p(pheader,mesh);
     volVectorField U(Uheader,mesh);
+    volScalarField M(Mheader,mesh);
 
     int N = 100;
     double Xmin = 0;
@@ -78,6 +91,7 @@ void Foam::calc(const argList& args, const Time& runTime, const fvMesh& mesh)
     scalarList T1dim;
     scalarList p1dim;
     scalarList U1dim;
+    scalarList M1dim;
 
     for(int j=0; j<N; j++){
     	double X = Xmin + j*DX;
@@ -95,27 +109,32 @@ void Foam::calc(const argList& args, const Time& runTime, const fvMesh& mesh)
     		tmp<scalarField> Ts = pl.sample(T);
     		tmp<scalarField> ps = pl.sample(p);
     		tmp<vectorField> Us = pl.sample(U);
+    		tmp<scalarField> Ms = pl.sample(M);
     		const scalarField& Area = pl.magSf();
 
 
     		scalar Tave = 0;
     		scalar pave = 0;
     		scalar Uave = 0;
+    		scalar Mave = 0;
     		forAll(Ts(),i){
 
     			Tave = Tave + Area[i]*Ts()[i];
     			pave = pave + Area[i]*ps()[i];
     			Uave = Uave + Area[i]*Us()[i].x();
+    			Mave = Mave + Area[i]*Ms()[i];
     		}
 
     		Tave = Tave/pl.area();
     		pave = pave/pl.area();
     		Uave = Uave/pl.area();
+    		Mave = Mave/pl.area();
 
     		X1dim.append(X);
     		T1dim.append(Tave);
     		p1dim.append(pave);
     		U1dim.append(Uave);
+    		M1dim.append(Mave);
     	}
     }
 
@@ -123,13 +142,13 @@ void Foam::calc(const argList& args, const Time& runTime, const fvMesh& mesh)
     	Info << "Writing output to file" << endl;
 
     	OFstream outFile(mesh.time().path()/mesh.time().timeName()/"oneDim.dat");
-    	outFile << "X p T U_x" << endl;
+    	outFile << "X p T U_x M" << endl;
     	forAll(X1dim,i){
-    		outFile << X1dim[i] << " " << p1dim[i] << " " << T1dim[i] << " " << U1dim[i] <<  endl;
+    		outFile << X1dim[i] << " " << p1dim[i] << " " << T1dim[i] << " " << U1dim[i] << " " << M1dim[i] <<  endl;
     	}
     }else{
     	forAll(X1dim,i){
-    		Info << X1dim[i] << " " << p1dim[i] << " " << T1dim[i] << " " << U1dim[i] <<  endl;
+    		Info << X1dim[i] << " " << p1dim[i] << " " << T1dim[i] << " " << U1dim[i] << " " << M1dim[i] <<  endl;
     	}
     }
 
