@@ -73,8 +73,8 @@ void Foam::calc(const argList& args, const Time& runTime, const fvMesh& mesh)
     		IOobject::MUST_READ
     );
 
-    if (~Mheader.headerOk()){
-    	Foam::error("Field Ma does not exist.");
+    if (!Mheader.headerOk()){
+    	Foam::error("Field Ma does not exist.").abort();
     }
 
     volScalarField T(Theader,mesh);
